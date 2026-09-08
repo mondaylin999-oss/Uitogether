@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="UITogether admin dashboard.">
   <meta name="theme-color" content="#32828D">
-  <title>Admin Dashboard — UITogether</title>
+  <!-- Neutral until Guard.requireAdminPage() confirms an admin; admin.js sets
+       the real title. A non-admin should not even see it in the tab. -->
+  <title>UITogether</title>
   <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles/style.css">
 </head>
@@ -13,7 +15,13 @@
   <a class="skip-link" href="#main">Skip to main content</a>
   <div id="navbar"></div>
 
-  <main id="main" class="container page">
+  <!-- `hidden` until Guard.requireAdminPage() resolves. This markup is static,
+       so without it the browser paints the entire admin dashboard while the
+       GET /api/auth/me check is still in flight - which on a cold free-tier
+       API is tens of seconds of a student looking at the admin panel before
+       being redirected. Fails closed: if the check never completes, nothing
+       is shown. admin.js reveals it. -->
+  <main id="main" class="container page" hidden>
     <div class="page-head">
       <div class="row" style="gap:10px">
         <h1>Admin Dashboard</h1>

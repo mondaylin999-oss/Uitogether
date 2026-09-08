@@ -15,13 +15,6 @@
     Navbar.renderNavbar(user);
     renderWelcome(user);
 
-    // Sent here by auth/guard.js when a non-admin opened /pages/admin.html
-    if (UIT.queryParam('denied') === 'admin') {
-      showToast('The admin dashboard is only available to administrators.',
-        { type: 'error', title: 'Access denied' });
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-
     loadStats();
     loadActivity();
 

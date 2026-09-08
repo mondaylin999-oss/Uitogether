@@ -27,9 +27,14 @@
   let pollModal = null;
 
   document.addEventListener('DOMContentLoaded', async () => {
-    // Redirects non-admins to the dashboard before anything renders.
+    // Redirects non-admins to the dashboard. The page's markup ships `hidden`
+    // (see admin.html) because this check is asynchronous - so a non-admin is
+    // sent away having seen nothing at all, not even the heading.
     const user = await Guard.requireAdminPage();
     if (!user) return;
+
+    document.title = 'Admin Dashboard — UITogether';
+    $('#main').hidden = false;
 
     state.user = user;
     Navbar.renderNavbar(user);
