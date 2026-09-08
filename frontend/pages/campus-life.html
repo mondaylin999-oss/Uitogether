@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Campus competitions, events and the lost & found board.">
+  <meta name="theme-color" content="#32828D">
+  <title>Campus Life — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <h1>Campus Life</h1>
+      <p>Competitions and events, plus the student lost &amp; found board.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Campus life sections">
+      <button class="tab" role="tab" id="tab-competitions" aria-controls="panel-competitions" aria-selected="true">Competitions</button>
+      <button class="tab" role="tab" id="tab-lostfound"    aria-controls="panel-lostfound"    aria-selected="false">Lost &amp; Found</button>
+    </div>
+
+    <!-- ================= COMPETITIONS ================= -->
+    <section class="tabpanel mt-4" id="panel-competitions" role="tabpanel" aria-labelledby="tab-competitions">
+      <div class="row-between mb-4">
+        <div class="row">
+          <label class="sr-only" for="comp-scope">Filter competitions</label>
+          <select class="select" id="comp-scope" style="width:auto;min-width:170px">
+            <option value="upcoming">Upcoming</option>
+            <option value="all">All events</option>
+            <option value="past">Past events</option>
+          </select>
+          <label class="sr-only" for="comp-search">Search competitions</label>
+          <input class="input" type="search" id="comp-search" placeholder="Search…" style="width:auto;min-width:160px">
+        </div>
+        <!-- rendered only for admins; the backend is the real gate -->
+        <button type="button" class="btn btn-primary" id="comp-create-btn" hidden>+ New competition</button>
+      </div>
+      <div id="comp-area" aria-live="polite"></div>
+    </section>
+
+    <!-- ================= LOST & FOUND ================= -->
+    <section class="tabpanel mt-4" id="panel-lostfound" role="tabpanel" aria-labelledby="tab-lostfound" hidden>
+      <div class="row-between mb-4">
+        <div class="row">
+          <label class="sr-only" for="lf-type">Filter by type</label>
+          <select class="select" id="lf-type" style="width:auto;min-width:140px">
+            <option value="">All items</option>
+            <option value="lost">Lost</option>
+            <option value="found">Found</option>
+          </select>
+          <label class="sr-only" for="lf-status">Filter by status</label>
+          <select class="select" id="lf-status" style="width:auto;min-width:140px">
+            <option value="active">Active</option>
+            <option value="">Any status</option>
+            <option value="resolved">Resolved</option>
+          </select>
+          <label class="checkbox" for="lf-mine" style="min-height:auto">
+            <input type="checkbox" id="lf-mine"><span>Only mine</span>
+          </label>
+        </div>
+        <button type="button" class="btn btn-primary" id="lf-create-btn">+ Report an item</button>
+      </div>
+      <div id="lf-area" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <!-- ================= competition form modal (admin only) ================= -->
+  <div class="modal" id="comp-modal" role="dialog" aria-modal="true" aria-labelledby="comp-modal-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="comp-modal-title">New competition</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close">&times;</button>
+      </div>
+      <form id="comp-form" novalidate>
+        <input type="hidden" id="comp-id">
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="comp-title">Title <span class="req">*</span></label>
+            <input class="input" type="text" id="comp-title" required data-autofocus aria-describedby="comp-title-error">
+            <p class="field-error" id="comp-title-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="comp-description">Description</label>
+            <textarea class="textarea" id="comp-description" rows="3"></textarea>
+            <p class="field-error" id="comp-description-error" role="alert"></p>
+          </div>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="comp-date">Date <span class="req">*</span></label>
+              <input class="input" type="date" id="comp-date" required aria-describedby="comp-date-error">
+              <p class="field-error" id="comp-date-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="comp-time">Time</label>
+              <input class="input" type="time" id="comp-time" aria-describedby="comp-time-error">
+              <p class="field-error" id="comp-time-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="comp-location">Location</label>
+              <input class="input" type="text" id="comp-location" aria-describedby="comp-location-error">
+              <p class="field-error" id="comp-location-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="comp-organizer">Organizer</label>
+              <input class="input" type="text" id="comp-organizer" aria-describedby="comp-organizer-error">
+              <p class="field-error" id="comp-organizer-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="comp-image">Image URL</label>
+            <input class="input" type="url" id="comp-image" placeholder="https://…" aria-describedby="comp-image-error">
+            <p class="field-error" id="comp-image_url-error" role="alert"></p>
+            <p class="field-error" id="comp-image-error" role="alert"></p>
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="comp-submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= lost & found form modal ================= -->
+  <div class="modal" id="lf-modal" role="dialog" aria-modal="true" aria-labelledby="lf-modal-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="lf-modal-title">Report an item</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close">&times;</button>
+      </div>
+      <form id="lf-form" novalidate>
+        <input type="hidden" id="lf-id">
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="lf-form-type">Type <span class="req">*</span></label>
+            <select class="select" id="lf-form-type" required data-autofocus aria-describedby="lf-form-type-error">
+              <option value="lost">I lost something</option>
+              <option value="found">I found something</option>
+            </select>
+            <p class="field-error" id="lf-type-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="lf-title">Item title <span class="req">*</span></label>
+            <input class="input" type="text" id="lf-title" placeholder="e.g. Black Casio calculator"
+                   required aria-describedby="lf-title-error">
+            <p class="field-error" id="lf-title-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="lf-description">Description</label>
+            <textarea class="textarea" id="lf-description" rows="3" placeholder="Distinguishing details…"></textarea>
+            <p class="field-error" id="lf-description-error" role="alert"></p>
+          </div>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="lf-location">Location</label>
+              <input class="input" type="text" id="lf-location" placeholder="e.g. Library 3rd floor" aria-describedby="lf-location-error">
+              <p class="field-error" id="lf-location-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="lf-date">Date</label>
+              <input class="input" type="date" id="lf-date" aria-describedby="lf-item_date-error">
+              <p class="field-error" id="lf-item_date-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="lf-contact">How should people reach you?</label>
+            <input class="input" type="text" id="lf-contact" placeholder="e.g. Telegram @yourname"
+                   aria-describedby="lf-contact-hint lf-contact_info-error">
+            <p class="hint" id="lf-contact-hint">This is shown publicly on your post — share only what you're comfortable with.</p>
+            <p class="field-error" id="lf-contact_info-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="lf-image-file">Image</label>
+            <input class="input" type="file" id="lf-image-file" name="image"
+                   accept="image/jpeg,image/png,image/webp" aria-describedby="lf-image_url-error">
+            <p class="hint">Accepted: JPG, PNG, WEBP. Max 5MB.</p>
+            <div class="mt-2" id="lf-image-preview-wrap" hidden>
+              <img id="lf-image-preview" src="" alt="Selected image preview" style="max-width:200px;max-height:160px;display:block">
+              <div class="mt-1">
+                <button type="button" class="btn btn-ghost btn-sm" id="lf-image-change">Change</button>
+                <button type="button" class="btn btn-danger btn-sm" id="lf-image-remove">Remove</button>
+              </div>
+            </div>
+            <input type="hidden" id="lf-remove-image" value="">
+            <p class="field-error" id="lf-image_url-error" role="alert"></p>
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="lf-submit">Post item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="campus-life.js"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="UITogether - connect with study buddies, campus events, lost and found, and community polls.">
+  <meta name="theme-color" content="#32828D">
+  <title>UITogether — Connect. Study. Grow Together.</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ============ top bar (public) ============ -->
+  <header class="navbar">
+    <div class="container navbar__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__mark" aria-hidden="true"><img src="../Logo/UITogether_Logo.jpg" alt="UITogether logo"></span>
+        <span>UITogether</span>
+      </a>
+      <button type="button" class="btn btn-ghost btn-sm" id="open-login-top">Log in</button>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <div class="landing-split">
+
+      <!-- ============ hero ============ -->
+      <section class="hero" aria-labelledby="hero-title">
+        <span class="hero__eyebrow">Student Community</span>
+        <h1 id="hero-title">Welcome To UITogether</h1>
+        <p class="hero__tagline">Connect. Study. Grow Together.</p>
+        <p class="hero__lead">
+          Find a study buddy who complements your strengths, keep up with campus
+          competitions, recover lost items, and have your say in community polls —
+          all in one place built for students.
+        </p>
+
+        <div class="hero__actions">
+          <a class="btn btn-primary" href="#register-card">Create your account</a>
+          <button type="button" class="btn btn-ghost" id="open-login-hero">I already have an account</button>
+        </div>
+
+        <div class="feature-row">
+          <div class="feature">
+            <span class="feature__icon" aria-hidden="true">🤝</span>
+            <div>
+              <h3>Study Buddy</h3>
+              <p>Swipe through students and match on subjects you complement.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <span class="feature__icon" aria-hidden="true">🎓</span>
+            <div>
+              <h3>Campus Life</h3>
+              <p>Competitions, events and a lost &amp; found board.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <span class="feature__icon" aria-hidden="true">🗳️</span>
+            <div>
+              <h3>Community Polls</h3>
+              <p>Vote on what the student community does next.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ sign up ============ -->
+      <section class="card" id="register-card" aria-labelledby="register-title">
+        <div class="card__head">
+          <h2 id="register-title">Create your account</h2>
+          <p class="text-sm">It only takes a minute.</p>
+        </div>
+        <div class="card__body">
+          <form id="register-form" novalidate>
+
+            <div class="field">
+              <label class="label" for="reg-name">Full name <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="reg-name" name="name" autocomplete="name"
+                     placeholder="e.g. Aung Kyaw" required aria-describedby="reg-name-error">
+              <p class="field-error" id="reg-name-error" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reg-email">Gmail / Email <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="email" id="reg-email" name="email" autocomplete="email"
+                     inputmode="email" placeholder="you@example.com" required aria-describedby="reg-email-hint reg-email-error">
+              <p class="hint" id="reg-email-hint">
+                Any valid email works. This is your UITogether login — never your email provider's password.
+              </p>
+              <p class="field-error" id="reg-email-error" role="alert"></p>
+            </div>
+
+            <div class="form-grid form-grid--2">
+              <div class="field">
+                <label class="label" for="reg-tnt">TNT number <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="text" id="reg-tnt" name="tnt"
+                       placeholder="e.g. TNT-1001" required aria-describedby="reg-tnt-error">
+                <p class="field-error" id="reg-tnt-error" role="alert"></p>
+              </div>
+
+              <div class="field">
+                <label class="label" for="reg-year">Academic year <span class="req" aria-hidden="true">*</span></label>
+                <select class="select" id="reg-year" name="academic_year" required aria-describedby="reg-year-error">
+                  <option value="">Choose…</option>
+                  <option>1st Year</option>
+                  <option>2nd Year</option>
+                  <option>3rd Year</option>
+                  <option>4th Year</option>
+                  <option>5th Year</option>
+                  <option>Final Year</option>
+                  <option>Postgraduate</option>
+                </select>
+                <p class="field-error" id="reg-year-error" role="alert"></p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reg-password">Password <span class="req" aria-hidden="true">*</span></label>
+              <div class="pw-wrap">
+                <input class="input" type="password" id="reg-password" name="password"
+                       autocomplete="new-password" placeholder="At least 8 characters"
+                       required aria-describedby="reg-password-hint reg-password-error">
+                <button type="button" class="pw-toggle" data-pw-toggle="reg-password"
+                        aria-label="Show password" aria-pressed="false">👁</button>
+              </div>
+              <p class="hint" id="reg-password-hint">Minimum 8 characters, including a letter and a number.</p>
+              <p class="field-error" id="reg-password-error" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reg-confirm">Confirm password <span class="req" aria-hidden="true">*</span></label>
+              <div class="pw-wrap">
+                <input class="input" type="password" id="reg-confirm" name="confirm_password"
+                       autocomplete="new-password" placeholder="Re-enter your password"
+                       required aria-describedby="reg-confirm-error">
+                <button type="button" class="pw-toggle" data-pw-toggle="reg-confirm"
+                        aria-label="Show password" aria-pressed="false">👁</button>
+              </div>
+              <p class="field-error" id="reg-confirm-error" role="alert"></p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="register-submit">Create account</button>
+
+            <p class="hint" style="text-align:center;margin-top:14px">
+              Already registered?
+              <button type="button" class="btn-link" id="open-login-form"
+                      style="background:none;border:0;color:var(--teal-700);font-weight:700;cursor:pointer;text-decoration:underline;padding:4px">
+                Log in instead
+              </button>
+            </p>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — a student community project. Connect. Study. Grow Together.</p>
+  </footer>
+
+  <!-- ============ login modal ============ -->
+  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="login-title">Log in to UITogether</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close login dialog">&times;</button>
+      </div>
+
+      <form id="login-form" novalidate>
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="login-email">Email</label>
+            <input class="input" type="email" id="login-email" name="email" autocomplete="email"
+                   inputmode="email" placeholder="you@example.com" required
+                   data-autofocus aria-describedby="login-email-error">
+            <p class="field-error" id="login-email-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="login-password">Password</label>
+            <div class="pw-wrap">
+              <input class="input" type="password" id="login-password" name="password"
+                     autocomplete="current-password" placeholder="Your UITogether password"
+                     required aria-describedby="login-password-error">
+              <button type="button" class="pw-toggle" data-pw-toggle="login-password"
+                      aria-label="Show password" aria-pressed="false">👁</button>
+            </div>
+            <p class="field-error" id="login-password-error" role="alert"></p>
+          </div>
+
+          <label class="checkbox" for="login-remember">
+            <input type="checkbox" id="login-remember" name="remember" checked>
+            <span>Remember me on this device</span>
+          </label>
+        </div>
+
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Close</button>
+          <button type="submit" class="btn btn-primary" id="login-submit">Log in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="utils/dom.js"></script>
+  <script src="utils/format.js"></script>
+  <script src="utils/validate.js"></script>
+  <script src="components/toast.js"></script>
+  <script src="components/states.js"></script>
+  <script src="components/modal.js"></script>
+  <script src="components/tabs.js"></script>
+  <script src="components/confirm.js"></script>
+  <script src="services/api.js"></script>
+  <script src="auth/auth.js"></script>
+  <script src="auth/guard.js"></script>
+  <script src="pages/landing.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# --- secrets: never commit real credentials ---
+.env
+.env.*
+!.env.example
+
+# --- dependencies ---
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- build / runtime output ---
+dist/
+build/
+coverage/
+*.log
+logs/
+*.pid
+
+# --- uploads (user supplied files stay out of git) ---
+backend/uploads/
+backend/public/uploads/
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

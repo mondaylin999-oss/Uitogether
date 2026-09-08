@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vote in UITogether community polls.">
+  <meta name="theme-color" content="#32828D">
+  <title>Voting — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <h1>Community Voting</h1>
+      <p>Have your say. One vote per poll — results update live from the database.</p>
+    </div>
+
+    <div class="row-between mb-4">
+      <div class="row">
+        <label class="sr-only" for="poll-status">Filter polls</label>
+        <select class="select" id="poll-status" style="width:auto;min-width:170px">
+          <option value="open">Open polls</option>
+          <option value="">All polls</option>
+          <option value="closed">Closed polls</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-primary" id="poll-create-btn" hidden>+ New poll</button>
+    </div>
+
+    <div id="poll-area" aria-live="polite"></div>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <!-- ================= poll form modal (admin only) ================= -->
+  <div class="modal" id="poll-modal" role="dialog" aria-modal="true" aria-labelledby="poll-modal-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="poll-modal-title">New poll</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close">&times;</button>
+      </div>
+      <form id="poll-form" novalidate>
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="poll-question">Question <span class="req">*</span></label>
+            <input class="input" type="text" id="poll-question" required data-autofocus
+                   placeholder="e.g. Which study activity should we organize next?"
+                   aria-describedby="poll-question-error">
+            <p class="field-error" id="poll-question-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="poll-description">Description</label>
+            <textarea class="textarea" id="poll-description" rows="2"></textarea>
+            <p class="field-error" id="poll-description-error" role="alert"></p>
+          </div>
+          <fieldset style="border:0;padding:0;margin:0 0 16px">
+            <legend class="label">Options <span class="req">*</span></legend>
+            <div id="poll-options-wrap"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="poll-add-option">+ Add option</button>
+            <p class="field-error" id="poll-options-error" role="alert"></p>
+          </fieldset>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="poll-submit">Create poll</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="voting.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Find and match with study buddies on UITogether.">
+  <meta name="theme-color" content="#32828D">
+  <title>Study Buddy — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <h1>Study Buddy</h1>
+      <p>Swipe or tap to show interest. Contact details unlock only when both of you agree.</p>
+    </div>
+
+    <!-- shown when the user has not created their own buddy profile yet -->
+    <div class="card mb-4" id="profile-prompt" hidden>
+      <div class="card__body">
+        <div class="row-between">
+          <div class="grow">
+            <h3>Create your Study Buddy profile first</h3>
+            <p class="text-sm">Other students need to see who you are before you can send requests.</p>
+          </div>
+          <a class="btn btn-primary" href="profile.html#buddy-profile">Create profile</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Study buddy sections">
+      <button class="tab" role="tab" id="tab-discover" aria-controls="panel-discover" aria-selected="true">Discover</button>
+      <button class="tab" role="tab" id="tab-requests" aria-controls="panel-requests" aria-selected="false">Requests</button>
+      <button class="tab" role="tab" id="tab-matches"  aria-controls="panel-matches"  aria-selected="false">Matches</button>
+    </div>
+
+    <!-- ================= DISCOVER ================= -->
+    <section class="tabpanel mt-4" id="panel-discover" role="tabpanel" aria-labelledby="tab-discover">
+      <div class="filters">
+        <div>
+          <label class="sr-only" for="filter-search">Search buddies</label>
+          <input class="input" type="search" id="filter-search" placeholder="Search name or nickname…">
+        </div>
+        <div>
+          <label class="sr-only" for="filter-style">Study style</label>
+          <select class="select" id="filter-style">
+            <option value="">Any study style</option>
+            <option value="solo_focus">Solo focus</option>
+            <option value="group_discussion">Group discussion</option>
+            <option value="quiet_library">Quiet library</option>
+            <option value="online_call">Online call</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+        <div>
+          <label class="sr-only" for="filter-meet">Meeting preference</label>
+          <select class="select" id="filter-meet">
+            <option value="">Any meeting style</option>
+            <option value="online">Online</option>
+            <option value="in_person">In person</option>
+            <option value="both">Online or in person</option>
+          </select>
+        </div>
+        <div>
+          <label class="sr-only" for="filter-subject">Subject</label>
+          <input class="input" type="search" id="filter-subject" placeholder="Subject, e.g. Calculus">
+        </div>
+      </div>
+
+      <div id="discover-area" aria-live="polite"></div>
+    </section>
+
+    <!-- ================= REQUESTS ================= -->
+    <section class="tabpanel mt-4" id="panel-requests" role="tabpanel" aria-labelledby="tab-requests" hidden>
+      <h2 class="mb-3">Incoming requests</h2>
+      <div class="card mb-4"><div id="incoming-list" aria-live="polite"></div></div>
+
+      <h2 class="mb-3">Requests you sent</h2>
+      <div class="card"><div id="outgoing-list" aria-live="polite"></div></div>
+    </section>
+
+    <!-- ================= MATCHES ================= -->
+    <section class="tabpanel mt-4" id="panel-matches" role="tabpanel" aria-labelledby="tab-matches" hidden>
+      <div id="matches-area" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <!-- ================= details modal ================= -->
+  <div class="modal" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="detail-title">Study buddy</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close details">&times;</button>
+      </div>
+      <div class="modal__body" id="detail-body"></div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn-danger btn-sm" id="detail-reject" hidden>Reject</button>
+        <button type="button" class="btn btn-primary btn-sm" id="detail-accept" hidden>Accept</button>
+        <button type="button" class="btn btn-ghost" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="study-buddy.js"></script>
+</body>
+</html>

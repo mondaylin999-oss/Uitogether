@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your UITogether account and study buddy profile.">
+  <meta name="theme-color" content="#32828D">
+  <title>Profile — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <h1>Your Profile</h1>
+      <p>Manage your account details and how other students see you.</p>
+    </div>
+
+    <div class="grid grid--2">
+
+      <!-- ================= account ================= -->
+      <section class="card" aria-labelledby="account-title">
+        <div class="card__head"><h2 id="account-title">Account</h2></div>
+        <div class="card__body">
+          <div id="account-summary"></div>
+
+          <form id="account-form" novalidate hidden>
+            <div class="field">
+              <label class="label" for="acc-name">Full name</label>
+              <input class="input" type="text" id="acc-name" autocomplete="name" aria-describedby="acc-name-error">
+              <p class="field-error" id="acc-name-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="acc-email">Email</label>
+              <input class="input" type="email" id="acc-email" disabled aria-describedby="acc-email-hint">
+              <p class="hint" id="acc-email-hint">Your email is your login and cannot be changed here.</p>
+            </div>
+            <div class="form-grid form-grid--2">
+              <div class="field">
+                <label class="label" for="acc-tnt">TNT number</label>
+                <input class="input" type="text" id="acc-tnt" aria-describedby="acc-tnt-error">
+                <p class="field-error" id="acc-tnt-error" role="alert"></p>
+              </div>
+              <div class="field">
+                <label class="label" for="acc-year">Academic year</label>
+                <select class="select" id="acc-year" aria-describedby="acc-academic_year-error">
+                  <option>1st Year</option><option>2nd Year</option><option>3rd Year</option>
+                  <option>4th Year</option><option>5th Year</option><option>Final Year</option>
+                  <option>Postgraduate</option><option>Staff</option>
+                </select>
+                <p class="field-error" id="acc-academic_year-error" role="alert"></p>
+              </div>
+            </div>
+            <div class="row">
+              <button type="submit" class="btn btn-primary" id="acc-save">Save changes</button>
+              <button type="button" class="btn btn-ghost" id="acc-cancel">Cancel</button>
+            </div>
+          </form>
+
+          <button type="button" class="btn btn-ghost btn-block mt-4" id="acc-edit">Edit account details</button>
+        </div>
+      </section>
+
+      <!-- ================= password ================= -->
+      <section class="card" aria-labelledby="password-title">
+        <div class="card__head"><h2 id="password-title">Password</h2></div>
+        <div class="card__body">
+          <p class="text-sm mb-4">Change your UITogether account password. We never show or store your password in the browser.</p>
+          <form id="password-form" novalidate>
+            <div class="field">
+              <label class="label" for="pw-current">Current password</label>
+              <div class="pw-wrap">
+                <input class="input" type="password" id="pw-current" autocomplete="current-password"
+                       required aria-describedby="pw-current_password-error">
+                <button type="button" class="pw-toggle" data-pw-toggle="pw-current" aria-label="Show password" aria-pressed="false">👁</button>
+              </div>
+              <p class="field-error" id="pw-current_password-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="pw-new">New password</label>
+              <div class="pw-wrap">
+                <input class="input" type="password" id="pw-new" autocomplete="new-password"
+                       required aria-describedby="pw-hint pw-new_password-error">
+                <button type="button" class="pw-toggle" data-pw-toggle="pw-new" aria-label="Show password" aria-pressed="false">👁</button>
+              </div>
+              <p class="hint" id="pw-hint">At least 8 characters, including a letter and a number.</p>
+              <p class="field-error" id="pw-new_password-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="pw-confirm">Confirm new password</label>
+              <div class="pw-wrap">
+                <input class="input" type="password" id="pw-confirm" autocomplete="new-password"
+                       required aria-describedby="pw-confirm-error">
+                <button type="button" class="pw-toggle" data-pw-toggle="pw-confirm" aria-label="Show password" aria-pressed="false">👁</button>
+              </div>
+              <p class="field-error" id="pw-confirm-error" role="alert"></p>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="pw-save">Update password</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= study buddy profile ================= -->
+    <section class="card mt-4" id="buddy-profile" aria-labelledby="buddy-title">
+      <div class="card__head">
+        <h2 id="buddy-title">Study Buddy profile</h2>
+        <p class="text-sm">This is what other students see. Telegram and Viber stay hidden until you match.</p>
+      </div>
+      <div class="card__body">
+        <div id="buddy-area"></div>
+
+        <form id="buddy-form" novalidate hidden>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="sb-nickname">Nickname <span class="req">*</span></label>
+              <input class="input" type="text" id="sb-nickname" required placeholder="e.g. Ali" aria-describedby="sb-nickname-error">
+              <p class="field-error" id="sb-nickname-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="sb-semester">Semester <span class="req">*</span></label>
+              <input class="input" type="text" id="sb-semester" required placeholder="e.g. Semester 4" aria-describedby="sb-semester-error">
+              <p class="field-error" id="sb-semester-error" role="alert"></p>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="sb-style">Study style <span class="req">*</span></label>
+              <select class="select" id="sb-style" required aria-describedby="sb-study_style-error">
+                <option value="mixed">Mixed</option>
+                <option value="solo_focus">Solo focus</option>
+                <option value="group_discussion">Group discussion</option>
+                <option value="quiet_library">Quiet library</option>
+                <option value="online_call">Online call</option>
+              </select>
+              <p class="field-error" id="sb-study_style-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="sb-meet">Wanna meet <span class="req">*</span></label>
+              <select class="select" id="sb-meet" required aria-describedby="sb-wanna_meet-error">
+                <option value="both">Online or in person</option>
+                <option value="online">Online</option>
+                <option value="in_person">In person</option>
+              </select>
+              <p class="field-error" id="sb-wanna_meet-error" role="alert"></p>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="sb-weak">Weak subjects</label>
+              <input class="input" type="text" id="sb-weak" placeholder="Calculus, Statistics" aria-describedby="sb-weak-hint sb-weak_subjects-error">
+              <p class="hint" id="sb-weak-hint">Separate with commas.</p>
+              <p class="field-error" id="sb-weak_subjects-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="sb-strong">Strong subjects</label>
+              <input class="input" type="text" id="sb-strong" placeholder="Java, Data Structures" aria-describedby="sb-strong-hint sb-strong_subjects-error">
+              <p class="hint" id="sb-strong-hint">Separate with commas.</p>
+              <p class="field-error" id="sb-strong_subjects-error" role="alert"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="sb-notes">Notes</label>
+            <textarea class="textarea" id="sb-notes" rows="2" placeholder="e.g. Free after 4pm on weekdays." aria-describedby="sb-notes-error"></textarea>
+            <p class="field-error" id="sb-notes-error" role="alert"></p>
+          </div>
+
+          <hr class="divider">
+          <h3 style="font-size:1rem" class="mb-3">Private contact details</h3>
+          <p class="text-sm mb-4">
+            🔒 Only shared after a mutual match. Provide at least one so a matched buddy can reach you.
+          </p>
+
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="sb-telegram">Telegram username</label>
+              <input class="input" type="text" id="sb-telegram" placeholder="@yourname" aria-describedby="sb-telegram-error">
+              <p class="field-error" id="sb-telegram-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="sb-viber">Viber number</label>
+              <input class="input" type="tel" id="sb-viber" placeholder="+959…" aria-describedby="sb-viber-error">
+              <p class="field-error" id="sb-viber-error" role="alert"></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <button type="submit" class="btn btn-primary" id="sb-save">Save profile</button>
+            <button type="button" class="btn btn-ghost" id="sb-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>

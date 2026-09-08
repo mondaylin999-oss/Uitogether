@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="UITogether admin dashboard.">
+  <meta name="theme-color" content="#32828D">
+  <title>Admin Dashboard — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <div class="row" style="gap:10px">
+        <h1>Admin Dashboard</h1>
+        <span class="badge badge--admin">Admin only</span>
+      </div>
+      <p>Manage competitions and polls, and moderate the lost &amp; found board.</p>
+    </div>
+
+    <section class="welcome" aria-labelledby="admin-stats-title">
+      <h2 id="admin-stats-title" style="color:#fff;font-size:1.25rem">Overview</h2>
+      <p>Live counts from the database.</p>
+      <div class="welcome__stats">
+        <div class="stat"><div class="stat__num" id="stat-comps">—</div><div class="stat__label">Competitions</div></div>
+        <div class="stat"><div class="stat__num" id="stat-upcoming">—</div><div class="stat__label">Upcoming</div></div>
+        <div class="stat"><div class="stat__num" id="stat-polls">—</div><div class="stat__label">Open polls</div></div>
+        <div class="stat"><div class="stat__num" id="stat-lf">—</div><div class="stat__label">Active L&amp;F</div></div>
+      </div>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Admin sections">
+      <button class="tab" role="tab" id="tab-comps"  aria-controls="panel-comps"  aria-selected="true">Competitions</button>
+      <button class="tab" role="tab" id="tab-polls"  aria-controls="panel-polls"  aria-selected="false">Polls</button>
+      <button class="tab" role="tab" id="tab-modlf"  aria-controls="panel-modlf"  aria-selected="false">Lost &amp; Found</button>
+    </div>
+
+    <!-- ============ competitions ============ -->
+    <section class="tabpanel mt-4" id="panel-comps" role="tabpanel" aria-labelledby="tab-comps">
+      <div class="row-between mb-4">
+        <h2>Manage competitions</h2>
+        <button type="button" class="btn btn-primary" id="admin-new-comp">+ New competition</button>
+      </div>
+      <div class="card"><div id="admin-comp-list" aria-live="polite"></div></div>
+    </section>
+
+    <!-- ============ polls ============ -->
+    <section class="tabpanel mt-4" id="panel-polls" role="tabpanel" aria-labelledby="tab-polls" hidden>
+      <div class="row-between mb-4">
+        <h2>Manage polls</h2>
+        <button type="button" class="btn btn-primary" id="admin-new-poll">+ New poll</button>
+      </div>
+      <div class="card"><div id="admin-poll-list" aria-live="polite"></div></div>
+    </section>
+
+    <!-- ============ lost & found moderation ============ -->
+    <section class="tabpanel mt-4" id="panel-modlf" role="tabpanel" aria-labelledby="tab-modlf" hidden>
+      <div class="row-between mb-4">
+        <h2>Moderate lost &amp; found</h2>
+        <p class="text-sm text-muted" style="margin:0">Admins can resolve or remove any student's post.</p>
+      </div>
+      <div class="card"><div id="admin-lf-list" aria-live="polite"></div></div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <!-- ============ competition modal ============ -->
+  <div class="modal" id="acomp-modal" role="dialog" aria-modal="true" aria-labelledby="acomp-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="acomp-title">New competition</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close">&times;</button>
+      </div>
+      <form id="acomp-form" novalidate>
+        <input type="hidden" id="acomp-id">
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="acomp-title-input">Title <span class="req">*</span></label>
+            <input class="input" type="text" id="acomp-title-input" required data-autofocus aria-describedby="acomp-title-input-error">
+            <p class="field-error" id="acomp-title-input-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="acomp-desc">Description</label>
+            <textarea class="textarea" id="acomp-desc" rows="3"></textarea>
+            <p class="field-error" id="acomp-desc-error" role="alert"></p>
+          </div>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="acomp-date">Date <span class="req">*</span></label>
+              <input class="input" type="date" id="acomp-date" required aria-describedby="acomp-date-error">
+              <p class="field-error" id="acomp-date-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="acomp-time">Time</label>
+              <input class="input" type="time" id="acomp-time" aria-describedby="acomp-time-error">
+              <p class="field-error" id="acomp-time-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label class="label" for="acomp-loc">Location</label>
+              <input class="input" type="text" id="acomp-loc" aria-describedby="acomp-loc-error">
+              <p class="field-error" id="acomp-loc-error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="label" for="acomp-org">Organizer</label>
+              <input class="input" type="text" id="acomp-org" aria-describedby="acomp-org-error">
+              <p class="field-error" id="acomp-org-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="acomp-img">Image URL</label>
+            <input class="input" type="url" id="acomp-img" placeholder="https://…" aria-describedby="acomp-img-error">
+            <p class="field-error" id="acomp-img-error" role="alert"></p>
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="acomp-submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ poll modal ============ -->
+  <div class="modal" id="apoll-modal" role="dialog" aria-modal="true" aria-labelledby="apoll-title" aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2 id="apoll-title">New poll</h2>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close">&times;</button>
+      </div>
+      <form id="apoll-form" novalidate>
+        <div class="modal__body">
+          <div class="field">
+            <label class="label" for="apoll-question">Question <span class="req">*</span></label>
+            <input class="input" type="text" id="apoll-question" required data-autofocus aria-describedby="apoll-question-error">
+            <p class="field-error" id="apoll-question-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="apoll-desc">Description</label>
+            <textarea class="textarea" id="apoll-desc" rows="2"></textarea>
+            <p class="field-error" id="apoll-desc-error" role="alert"></p>
+          </div>
+          <fieldset style="border:0;padding:0;margin:0 0 16px">
+            <legend class="label">Options <span class="req">*</span></legend>
+            <div id="apoll-options"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="apoll-add">+ Add option</button>
+            <p class="field-error" id="apoll-options-error" role="alert"></p>
+          </fieldset>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="apoll-submit">Create poll</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

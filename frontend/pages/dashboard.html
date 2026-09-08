@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your UITogether dashboard.">
+  <meta name="theme-color" content="#32828D">
+  <title>Dashboard — UITogether</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="navbar"></div>
+
+  <main id="main" class="container page">
+
+    <section class="welcome" aria-labelledby="welcome-title">
+      <h1 id="welcome-title">Welcome Back!</h1>
+      <p>Connect. Study. Grow Together.</p>
+      <div class="welcome__stats" id="dash-stats" aria-live="polite">
+        <div class="stat"><div class="stat__num" id="stat-matches">—</div><div class="stat__label">Matches</div></div>
+        <div class="stat"><div class="stat__num" id="stat-requests">—</div><div class="stat__label">Requests</div></div>
+        <div class="stat"><div class="stat__num" id="stat-events">—</div><div class="stat__label">Events</div></div>
+        <div class="stat"><div class="stat__num" id="stat-polls">—</div><div class="stat__label">Open polls</div></div>
+      </div>
+    </section>
+
+    <h2 class="mb-4">What would you like to do?</h2>
+
+    <div class="grid grid--4">
+      <article class="card card--hover">
+        <div class="card__body tile">
+          <div class="tile__icon" aria-hidden="true">🤝</div>
+          <h3>Study Buddy</h3>
+          <p>Find someone to study with.</p>
+          <a class="btn btn-primary btn-block" href="study-buddy.html">Find a buddy</a>
+        </div>
+      </article>
+
+      <article class="card card--hover">
+        <div class="card__body tile">
+          <div class="tile__icon" aria-hidden="true">🏆</div>
+          <h3>Competitions</h3>
+          <p>See upcoming campus competitions.</p>
+          <a class="btn btn-primary btn-block" href="campus-life.html#competitions">View events</a>
+        </div>
+      </article>
+
+      <article class="card card--hover">
+        <div class="card__body tile">
+          <div class="tile__icon" aria-hidden="true">🔎</div>
+          <h3>Lost &amp; Found</h3>
+          <p>Find or report lost items.</p>
+          <a class="btn btn-primary btn-block" href="campus-life.html#lost-found">Open board</a>
+        </div>
+      </article>
+
+      <article class="card card--hover">
+        <div class="card__body tile">
+          <div class="tile__icon" aria-hidden="true">🗳️</div>
+          <h3>Voting</h3>
+          <p>Vote in community polls.</p>
+          <a class="btn btn-primary btn-block" href="voting.html">Cast your vote</a>
+        </div>
+      </article>
+    </div>
+
+    <section class="mt-4" aria-labelledby="activity-title">
+      <div class="row-between mb-3 mt-4">
+        <h2 id="activity-title">Recent activity</h2>
+        <button type="button" class="btn btn-ghost btn-sm" id="mark-all-read">Mark all read</button>
+      </div>
+      <div class="card">
+        <div id="activity-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p>UITogether — Connect. Study. Grow Together.</p>
+  </footer>
+
+  <script src="../utils/dom.js"></script>
+  <script src="../utils/format.js"></script>
+  <script src="../utils/validate.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/states.js"></script>
+  <script src="../components/modal.js"></script>
+  <script src="../components/tabs.js"></script>
+  <script src="../components/confirm.js"></script>
+  <script src="../services/api.js"></script>
+  <script src="../auth/auth.js"></script>
+  <script src="../auth/guard.js"></script>
+  <script src="../components/navbar.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
