@@ -82,11 +82,22 @@ services:
         sync: false          # https://uitogether-api.onrender.com/api
     routes:
       # Clean URL for the admin dashboard: /admin serves pages/admin.html
-      # while the address bar keeps saying /admin (rewrite, not redirect).
+      # while the address bar keeps saying /admin. It stays a REWRITE so the
+      # browser's base URL is the site root, which is what makes the page's
+      # "../styles/style.css" style links resolve - and what navbar.js and
+      # guard.js assume when they test the path for "/pages/".
       #
-      # Do NOT add a `/admin/` -> `/admin` redirect alongside this. Render
-      # normalises the trailing slash before matching, so such a rule also
-      # matches `/admin` and redirects it to itself - an infinite 301 loop.
+      # Both spellings are listed, and BOTH are rewrites. Do NOT make either
+      # one a redirect to the other: Render normalises the trailing slash
+      # before matching, so a `/admin/` -> `/admin` redirect also matches
+      # `/admin` and sends it to itself - an infinite 301 loop.
+      #
+      # Note that a Blueprint sync only ADDS routes; it never removes one that
+      # was synced earlier. Deleting a rule means editing it out by hand under
+      # the static site's Redirects/Rewrites tab as well as here.
+      - type: rewrite
+        source: /admin/
+        destination: /pages/admin.html
       - type: rewrite
         source: /admin
         destination: /pages/admin.html

@@ -91,10 +91,18 @@ DATABASE_URL="<external connection string>" DB_SSL=true npm run db:status
 | `/admin` | the admin dashboard (`pages/admin.html`, via a rewrite in `render.yaml`) |
 | `/pages/*.html` | every other page, by its own filename |
 
-`/admin` is a rewrite, so the address bar keeps showing `/admin`. Do not add a
-`/admin/` → `/admin` redirect next to it: Render normalises the trailing slash
-before matching routes, so that rule also matches `/admin` and redirects it to
-itself, which is an infinite 301 loop.
+`/admin` is a rewrite, so the address bar keeps showing `/admin` and the
+page's `../`-relative asset links still resolve against the site root.
+
+Two Render behaviours to know before editing these routes:
+
+- **Never point `/admin/` at `/admin` with a redirect.** Render normalises the
+  trailing slash before matching, so that rule also matches `/admin` and
+  redirects it to itself — an infinite 301 loop. Both spellings are rewrites
+  for this reason.
+- **A Blueprint sync only adds routes, never removes them.** Deleting a rule
+  from `render.yaml` does not delete it from the service; you must also edit it
+  out under the static site's *Redirects/Rewrites* tab.
 
 ## 4. Verify
 
