@@ -33,12 +33,7 @@ services:
     # nothing to apply is a no-op, and a broken migration stops the service
     # from starting rather than half-applying.
     # `preDeployCommand` is the tidier home for this, but it needs a paid plan.
-    # TEMPORARY - one-off demo bootstrap, reverted in the next commit.
-    # Removes the throwaway account left over from deployment testing (it holds
-    # user_id 1, which seed.sql needs for the admin), then loads the demo data.
-    # `?` is used rather than `$1` because the shell would eat the dollar, and
-    # config/database.js rewrites `?` to `$1` for us anyway.
-    startCommand: npm run db:migrate && node -e "const{query,closePool}=require('./config/database');query('DELETE FROM users WHERE email = ?',['deploy.check@example.com']).then(r=>console.log('removed test accounts:',r.affectedRows)).then(closePool).then(()=>process.exit(0)).catch(e=>{console.error(e.message);process.exit(1)})" && npm run db:seed && node server.js
+    startCommand: npm run start:migrate
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
