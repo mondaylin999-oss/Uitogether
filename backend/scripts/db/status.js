@@ -36,12 +36,15 @@ async function status() {
     // --- migrations ---
     let appliedRows = [];
     try {
-      const [rows] = await connection.query(
+      const { rows } = await connection.query(
         'SELECT filename, applied_at FROM schema_migrations ORDER BY filename'
       );
       appliedRows = rows;
     } catch (error) {
-      if (error.code !== 'ER_NO_SUCH_TABLE') throw error;
+      // 42P01 undefined_table. The failed statement aborts the implicit
+      // transaction, so the connection must be rolled back before reuse.
+      if (error.code !== '42P01') throw error;
+      await connection.query('ROLLBACK');
       logger.warn('schema_migrations does not exist - run `npm run db:setup`');
     }
 
@@ -57,11 +60,10 @@ async function status() {
     console.log(`  ${appliedNames.size} applied, ${pending.length} pending\n`);
 
     // --- tables ---
-    const [tableRows] = await connection.query(
-      `SELECT TABLE_NAME AS name FROM information_schema.TABLES
-        WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
-        ORDER BY TABLE_NAME`,
-      [env.db.database]
+    const { rows: tableRows } = await connection.query(
+      `SELECT table_name AS name FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        ORDER BY table_name`
     );
     const existing = new Set(tableRows.map((row) => row.name));
 
@@ -73,24 +75,28 @@ async function status() {
       }
       // Table name comes from the hard-coded APP_TABLES list, never user input.
       // eslint-disable-next-line no-await-in-loop
-      const [[countRow]] = await connection.query(`SELECT COUNT(*) AS total FROM \`${table}\``);
-      console.log(`  ${table.padEnd(24)} ${String(countRow.total).padStart(6)} rows`);
+      const { rows: countRows } = await connection.query(`SELECT COUNT(*) AS total FROM "${table}"`);
+      console.log(`  ${table.padEnd(24)} ${String(countRows[0].total).padStart(6)} rows`);
     }
 
     // --- views & triggers ---
-    const [views] = await connection.query(
-      `SELECT TABLE_NAME AS name FROM information_schema.VIEWS
-        WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME`,
-      [env.db.database]
+    const { rows: views } = await connection.query(
+      `SELECT table_name AS name FROM information_schema.views
+        WHERE table_schema = 'public' ORDER BY table_name`
     );
-    const [triggers] = await connection.query(
-      `SELECT TRIGGER_NAME AS name FROM information_schema.TRIGGERS
-        WHERE TRIGGER_SCHEMA = ? ORDER BY TRIGGER_NAME`,
-      [env.db.database]
+    // information_schema.triggers lists one row per triggering event, so a
+    // trigger on several events would appear several times. pg_trigger is the
+    // authoritative list; tgisinternal filters out the ones PostgreSQL
+    // creates behind the scenes for foreign keys.
+    const { rows: triggers } = await connection.query(
+      `SELECT tgname AS name FROM pg_trigger
+        WHERE NOT tgisinternal ORDER BY tgname`
     );
 
-    console.log(`\nVIEWS    (${views.length}): ${views.map((v) => v.name).join(', ') || '-'}`);
-    console.log(`TRIGGERS (${triggers.length}): ${triggers.map((t) => t.name).join(', ') || '-'}\n`);
+    console.log(`
+VIEWS    (${views.length}): ${views.map((v) => v.name).join(', ') || '-'}`);
+    console.log(`TRIGGERS (${triggers.length}): ${triggers.map((t) => t.name).join(', ') || '-'}
+`);
 
     return { applied: appliedNames.size, pending: pending.length };
   } finally {

@@ -9,7 +9,7 @@
  */
 
 const readline = require('readline');
-const mysql = require('mysql2/promise');
+const { Client } = require('pg');
 
 const { env, validateEnv } = require('../../config/env');
 const { baseConnectionConfig } = require('../../config/database');
@@ -41,18 +41,20 @@ function confirm(question) {
 async function dropDatabase() {
   const database = assertSafeIdentifier(env.db.database);
 
-  const connection = await mysql.createConnection(
-    baseConnectionConfig({ withDatabase: false })
-  );
+  const client = new Client(baseConnectionConfig({ withDatabase: false }));
+  await client.connect();
 
   try {
-    await connection.query(`DROP DATABASE IF EXISTS \`${database}\``);
+    // PostgreSQL refuses to drop a database while anything is connected to it,
+    // and the app's own pool may still be open. WITH (FORCE) terminates those
+    // sessions first (PostgreSQL 13+).
+    await client.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`);
     logger.warn(`Dropped database "${database}"`);
   } catch (error) {
     error.friendlyMessage = explainConnectionError(error);
     throw error;
   } finally {
-    await connection.end();
+    await client.end();
   }
 }
 

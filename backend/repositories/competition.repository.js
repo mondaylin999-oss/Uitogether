@@ -45,8 +45,8 @@ async function list(filters, pagination) {
   const where = [];
   const params = [];
 
-  if (filters.scope === 'upcoming') where.push('c.event_date >= CURDATE()');
-  if (filters.scope === 'past') where.push('c.event_date < CURDATE()');
+  if (filters.scope === 'upcoming') where.push('c.event_date >= CURRENT_DATE');
+  if (filters.scope === 'past') where.push('c.event_date < CURRENT_DATE');
 
   if (filters.q) {
     where.push('(c.title LIKE ? OR c.description LIKE ? OR c.organizer LIKE ?)');
@@ -81,7 +81,8 @@ async function create(data, adminUserId) {
   const result = await query(
     `INSERT INTO competitions
        (title, description, event_date, event_time, location, organizer, image_url, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING competition_id`,
     [
       data.title,
       data.description ?? null,

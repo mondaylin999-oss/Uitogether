@@ -59,7 +59,8 @@ function findByIdWithPassword(userId) {
 async function create(data) {
   const result = await query(
     `INSERT INTO users (name, email, tnt, academic_year, password_hash, role)
-     VALUES (?, ?, ?, ?, ?, 'student')`,
+     VALUES (?, ?, ?, ?, ?, 'student')
+     RETURNING user_id`,
     [data.name, data.email, data.tnt, data.academic_year, data.password_hash]
   );
   return result.insertId;

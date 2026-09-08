@@ -30,10 +30,11 @@ const toList = (value, fallback) =>
     .filter(Boolean);
 
 /**
- * Managed MySQL providers (Aiven, Clever Cloud, PlanetScale...) hand out a
- * single connection URI instead of five separate variables. When DATABASE_URL
- * is present it wins; the individual DB_* variables stay as the local-development
- * path and as per-field overrides.
+ * Managed PostgreSQL providers (Render, Neon, Supabase...) hand out a single
+ * connection URI instead of five separate variables. Render injects
+ * DATABASE_URL automatically from the database declared in render.yaml. When
+ * it is present it supplies every field; the individual DB_* variables remain
+ * the local-development path and take precedence as per-field overrides.
  *
  * @param {string|undefined} value
  * @returns {{host?:string, port?:number, user?:string, password?:string, database?:string, ssl?:boolean}}
@@ -49,7 +50,7 @@ function parseDatabaseUrl(value) {
   }
 
   const database = decodeURIComponent(url.pathname.replace(/^\//, ''));
-  const sslMode = url.searchParams.get('ssl-mode') || url.searchParams.get('sslmode');
+  const sslMode = url.searchParams.get('sslmode') || url.searchParams.get('ssl-mode');
 
   return {
     host: url.hostname || undefined,
@@ -57,7 +58,7 @@ function parseDatabaseUrl(value) {
     user: url.username ? decodeURIComponent(url.username) : undefined,
     password: url.password ? decodeURIComponent(url.password) : undefined,
     database: database || undefined,
-    ssl: sslMode ? sslMode.toUpperCase() !== 'DISABLED' : undefined,
+    ssl: sslMode ? !['disable', 'disabled', 'allow'].includes(sslMode.toLowerCase()) : undefined,
   };
 }
 
@@ -94,20 +95,18 @@ const env = {
 
   db: {
     host: process.env.DB_HOST || dbUrl.host || '127.0.0.1',
-    port: toInt(process.env.DB_PORT, dbUrl.port || 3306),
-    user: process.env.DB_USER || dbUrl.user || 'root',
+    port: toInt(process.env.DB_PORT, dbUrl.port || 5432),
+    user: process.env.DB_USER || dbUrl.user || 'postgres',
     password: process.env.DB_PASSWORD || dbUrl.password || '',
     database: process.env.DB_NAME || dbUrl.database || 'uitogether_db',
     connectionLimit: toInt(process.env.DB_CONNECTION_LIMIT, 10),
-    // Hosted MySQL requires TLS. DB_SSL=true is enough for Aiven / Clever Cloud
-    // (their certificates chain to a public CA); DB_SSL_CA holds a PEM bundle
-    // for providers that use a private CA.
+    // The database CREATE DATABASE is issued from, because PostgreSQL always
+    // connects to some database. Only scripts/db/create-database.js uses it.
+    maintenanceDatabase: process.env.DB_MAINTENANCE_NAME || 'postgres',
+    // Hosted PostgreSQL requires TLS. Render's EXTERNAL connection string
+    // needs it; the internal one (same region, private network) does not.
     ssl: toBool(process.env.DB_SSL, dbUrl.ssl ?? false),
     sslCa: process.env.DB_SSL_CA || null,
-    // Optional: connect over a UNIX socket instead of TCP. Some MySQL
-    // installs (including the default macOS /usr/local/mysql build) listen
-    // only on a socket. When set, host/port are ignored.
-    socketPath: process.env.DB_SOCKET || null,
   },
 
   jwt: {

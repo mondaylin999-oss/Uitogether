@@ -1,12 +1,18 @@
 # Render Blueprint - UITogether
 #
-# Two services:
+# Three resources, all on Render:
+#   uitogether-db     PostgreSQL database
 #   uitogether-api    Node web service  (Express REST API)
 #   uitogether-web    Static site       (plain HTML/CSS/JS frontend)
 #
-# The database is NOT declared here: Render offers PostgreSQL only, and this
-# app runs on MySQL. Provision a free MySQL instance elsewhere (Aiven or
-# Clever Cloud) and paste its URI into DATABASE_URL below. See DEPLOY.md.
+# See DEPLOY.md for the click-by-click walkthrough.
+
+databases:
+  - name: uitogether-db
+    databaseName: uitogether_db
+    user: uitogether
+    plan: free
+    region: singapore
 
 services:
   # ---------------------------------------------------------------- backend
@@ -14,6 +20,8 @@ services:
     name: uitogether-api
     runtime: node
     plan: free
+    # Must match the database's region, or the two cannot use the private
+    # network and connectionString below falls back to the public internet.
     region: singapore
     rootDir: backend
     buildCommand: npm ci
@@ -26,9 +34,13 @@ services:
         value: "20"
       # Render injects PORT; server.js already reads it.
       - key: DATABASE_URL
-        sync: false          # mysql://user:pass@host:port/dbname?ssl-mode=REQUIRED
+        fromDatabase:
+          name: uitogether-db
+          property: connectionString
+      # The internal connection string stays inside Render's private network,
+      # so TLS is not required (and the internal host has no public cert).
       - key: DB_SSL
-        value: "true"
+        value: "false"
       - key: JWT_SECRET
         generateValue: true  # Render generates a long random secret
       - key: JWT_EXPIRES_IN
@@ -36,6 +48,7 @@ services:
       - key: BCRYPT_SALT_ROUNDS
         value: "12"
       # Must list the static site's URL, or the browser gets a CORS error.
+      # `host` yields a bare hostname; config/env.js normalises it to an origin.
       - key: CLIENT_URL
         fromService:
           type: web

@@ -11,8 +11,10 @@ database/
 └── reset.sql       drops everything, by hand (destructive)
 ```
 
-**MySQL 8.0+** (or MariaDB 10.6+). The project was developed against MAMP's
-MySQL, which listens on port **8889**; a standard MySQL install uses 3306.
+**PostgreSQL 13+**, on the default port **5432**. Any managed provider works
+too — set `DATABASE_URL` and `DB_SSL=true` instead of the individual `DB_*`
+variables. (The schema was ported from MySQL 8.0; see
+[DEPLOY.md](../DEPLOY.md#what-the-port-changed) for what changed.)
 
 ---
 
@@ -34,34 +36,40 @@ not been applied yet.
 | `npm run db:create` | Create the empty `uitogether_db` database only |
 | `npm run db:migrate` | Apply pending migrations only |
 | `npm run db:setup` | `db:create` + `db:migrate` — the normal first-run command |
-| `npm run db:seed` | Load `seed.sql`. Re-runnable (`INSERT IGNORE`) |
+| `npm run db:seed` | Load `seed.sql`. Re-runnable (`ON CONFLICT DO NOTHING`) |
 | `npm run db:status` | Report applied / pending migrations and row counts |
 | `npm run db:reset` | **Destructive.** Drop → setup → seed. Asks for confirmation |
 | `npm run db:schema` | Regenerate `schema.sql` from `migrations/` |
 
 The scripts themselves are Node files in `backend/scripts/db/` — they live
 inside `backend/` because they import the backend's config and its installed
-`mysql2` driver. This folder stays pure SQL.
+`pg` driver. This folder stays pure SQL.
 
 ---
 
 ## 2. Doing it by hand instead
 
-If you would rather use MySQL Workbench, phpMyAdmin or the `mysql` client:
+If you would rather use pgAdmin, DBeaver or the `psql` client:
 
 ```bash
 # 1. create the database
-mysql -u root -p -P 8889 -h 127.0.0.1 -e "CREATE DATABASE uitogether_db
-     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+createdb uitogether_db
 
 # 2. create the tables
-mysql -u root -p -P 8889 -h 127.0.0.1 uitogether_db < database/schema.sql
+psql -d uitogether_db -v ON_ERROR_STOP=1 -f database/schema.sql
 
 # 3. optional demo data
-mysql -u root -p -P 8889 -h 127.0.0.1 uitogether_db < database/seed.sql
+psql -d uitogether_db -v ON_ERROR_STOP=1 -f database/seed.sql
 ```
 
-Drop the `-P 8889 -h 127.0.0.1` if your MySQL is on the default 3306.
+Against a hosted database, pass the connection string instead of `-d`:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/schema.sql
+```
+
+Unlike MySQL, PostgreSQL has no `USE` statement — the database you connect to
+*is* the target, which is why `schema.sql` no longer creates one itself.
 
 To start over: run `reset.sql`, then `schema.sql` again.
 
@@ -128,7 +136,7 @@ migrator maintains for itself.
 ### The seven triggers
 
 These duplicate rules the API already enforces. That is deliberate: if
-something ever reaches MySQL by another route, the database still says no.
+something ever reaches the database by another route, it still says no.
 
 | Trigger | Refuses |
 |---|---|
@@ -178,12 +186,12 @@ UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 
 | Symptom | Cause and fix |
 |---|---|
-| `ER_ACCESS_DENIED_ERROR` | Wrong `DB_USER` / `DB_PASSWORD` in `backend/.env`. MAMP's default is `root` / `root` |
-| `ECONNREFUSED 127.0.0.1:8889` | MySQL is not running, or it is on 3306. Start MAMP, or set `DB_PORT=3306` |
+| `password authentication failed` | Wrong `DB_USER` / `DB_PASSWORD` in `backend/.env` |
+| `ECONNREFUSED 127.0.0.1:5432` | PostgreSQL is not running, or it is on another port. Start the server, or fix `DB_PORT` |
 | `ER_BAD_DB_ERROR: Unknown database` | Run `npm run db:setup` |
 | `ER_CHECK_CONSTRAINT_VIOLATED` on register | The email failed `chk_users_email_format`. Migration 009 must be applied — check `npm run db:status` |
 | A migration is stuck as "pending" | Its checksum changed since it was applied. Restore the file, or add a new migration instead of editing it |
-| Connecting over a socket, not TCP | Set `DB_SOCKET=/Applications/MAMP/tmp/mysql/mysql.sock` in `.env`; `DB_HOST`/`DB_PORT` are then ignored |
+| `no pg_hba.conf entry` / TLS required | A hosted database needs `DB_SSL=true` alongside `DATABASE_URL` |
 
 Full setup instructions: [`../README.md`](../README.md) ·
 architecture and API: [`../README1.md`](../README1.md)

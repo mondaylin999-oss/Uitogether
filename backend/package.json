@@ -2,7 +2,7 @@
   "name": "uitogether-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "UITogether - student community REST API (Node.js + Express + MySQL)",
+  "description": "UITogether - student community REST API (Node.js + Express + PostgreSQL)",
   "main": "server.js",
   "type": "commonjs",
   "engines": {
@@ -22,7 +22,7 @@
   "keywords": [
     "uitogether",
     "express",
-    "mysql",
+    "postgres",
     "rest-api"
   ],
   "license": "MIT",
@@ -38,7 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.12.0"
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

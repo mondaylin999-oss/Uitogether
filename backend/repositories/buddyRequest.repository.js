@@ -88,7 +88,8 @@ async function findMatchedIdsAmong(userId, candidateIds) {
 /** @returns {Promise<number>} new request_id */
 async function create(senderId, receiverId) {
   const result = await query(
-    `INSERT INTO buddy_requests (sender_id, receiver_id, status) VALUES (?, ?, 'pending')`,
+    `INSERT INTO buddy_requests (sender_id, receiver_id, status) VALUES (?, ?, 'pending')
+     RETURNING request_id`,
     [senderId, receiverId]
   );
   return result.insertId;
