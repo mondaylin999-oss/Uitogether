@@ -89,7 +89,7 @@ services in one step.
    **The `/api` suffix is required.**
 
 5. Click **Apply**. Render builds the API (`npm ci`, `npm start`) and the static
-   site (`scripts/build-frontend.sh`, which bakes `API_BASE_URL` into
+   site (`bash scripts/build-frontend.sh`, which bakes `API_BASE_URL` into
    `frontend/config.js`).
 
 ## 4. Verify

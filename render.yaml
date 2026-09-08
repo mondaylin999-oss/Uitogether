@@ -52,7 +52,7 @@ services:
   - type: web
     name: uitogether-web
     runtime: static
-    buildCommand: ./scripts/build-frontend.sh
+    buildCommand: bash scripts/build-frontend.sh
     staticPublishPath: ./frontend
     envVars:
       # The API origin baked into frontend/config.js at build time.
