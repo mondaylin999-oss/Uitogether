@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="UITogether admin dashboard.">
   <meta name="theme-color" content="#32828D">
-  <!-- Neutral until Guard.requireAdminPage() confirms an admin; admin.js sets
-       the real title. A non-admin should not even see it in the tab. -->
+  <!-- Neutral until an admin session is confirmed; admin.js sets the real
+       title. A non-admin should not even see it in the tab. -->
   <title>UITogether</title>
   <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles/style.css">
@@ -15,7 +15,48 @@
   <a class="skip-link" href="#main">Skip to main content</a>
   <div id="navbar"></div>
 
-  <!-- `hidden` until Guard.requireAdminPage() resolves. This markup is static,
+  <!-- Sign-in shown when this page is opened without an admin session, so the
+       admin area can be reached directly at /admin without going via the
+       landing page.
+
+       Deliberately neutral: no "admin" wording, no branding, no hint about
+       what lies behind it. A student who guesses the URL sees an ordinary
+       sign-in box, and signing in with their own valid credentials simply
+       takes them to their normal dashboard - exactly as the site's own login
+       would. Nothing tells them an admin area exists. -->
+  <section id="admin-signin" class="container page" hidden>
+    <div class="card" style="max-width:420px;margin:48px auto">
+      <h1 style="margin-bottom:4px">Sign in</h1>
+      <p style="margin-bottom:18px">Enter your UITogether account details.</p>
+
+      <form id="admin-signin-form" novalidate>
+        <div class="field">
+          <label class="label" for="asi-email">Email</label>
+          <input class="input" type="email" id="asi-email" name="email" autocomplete="email"
+                 inputmode="email" placeholder="you@example.com" required
+                 data-autofocus aria-describedby="asi-email-error">
+          <p class="field-error" id="asi-email-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="asi-password">Password</label>
+          <div class="pw-wrap">
+            <input class="input" type="password" id="asi-password" name="password"
+                   autocomplete="current-password" placeholder="Your UITogether password"
+                   required aria-describedby="asi-password-error">
+            <button type="button" class="pw-toggle" data-pw-toggle="asi-password"
+                    aria-label="Show password" aria-pressed="false">&#128065;</button>
+          </div>
+          <p class="field-error" id="asi-password-error" role="alert"></p>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="asi-submit"
+                style="width:100%;margin-top:6px">Sign in</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- `hidden` until the admin check resolves. This markup is static,
        so without it the browser paints the entire admin dashboard while the
        GET /api/auth/me check is still in flight - which on a cold free-tier
        API is tens of seconds of a student looking at the admin panel before

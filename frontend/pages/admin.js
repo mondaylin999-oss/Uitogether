@@ -2,9 +2,14 @@
    pages/admin.js - admin management console.
 
    AUTHORIZATION MODEL (important):
-   Guard.requireAdminPage() decides whether this PAGE renders, using the role
-   the backend just returned from GET /api/auth/me - not the cached copy. That
-   is a routing convenience, NOT the security boundary.
+   resolveAdmin() below decides whether this PAGE renders, using the role the
+   backend just returned from GET /api/auth/me - not the cached copy. That is
+   a routing convenience, NOT the security boundary.
+
+   This page carries its own sign-in so /admin can be opened directly. The
+   form is deliberately neutral, and a non-admin who signs in through it is
+   sent to the ordinary dashboard, so nothing here advertises that an admin
+   area exists.
 
    The real boundary is server-side: every write below hits a route that mounts
    `authenticate + requireAdmin`, so a student who edits localStorage, forces
@@ -16,7 +21,7 @@
 
   const UIT = window.UIT;
   const {
-    $, $$, api, Guard, Navbar, ApiError, escapeHtml, titleCase,
+    $, $$, api, Auth, Navbar, ApiError, escapeHtml, titleCase,
     formatDate, formatTime, timeAgo, showToast, showLoading, showError,
     showEmptyState, setButtonLoading, createModal, initTabs, confirmDialog,
     clearFieldErrors, setFieldError, applyServerFieldErrors,
@@ -27,12 +32,97 @@
   let pollModal = null;
 
   document.addEventListener('DOMContentLoaded', async () => {
-    // Redirects non-admins to the dashboard. The page's markup ships `hidden`
-    // (see admin.html) because this check is asynchronous - so a non-admin is
-    // sent away having seen nothing at all, not even the heading.
-    const user = await Guard.requireAdminPage();
+    const user = await resolveAdmin();
     if (!user) return;
+    startAdmin(user);
+  });
 
+  /**
+   * Decide who, if anyone, is allowed to see this page.
+   *
+   * Unlike the other guarded pages this one does NOT bounce a signed-out
+   * visitor to the landing page: /admin is meant to be openable directly, so
+   * it offers its own sign-in instead.
+   *
+   * @returns {Promise<object|null>} an admin, or null when the page must not
+   *   render (the sign-in form is showing, or the visitor was redirected)
+   */
+  async function resolveAdmin() {
+    if (!Auth.isAuthenticated()) {
+      showSignIn();
+      return null;
+    }
+
+    let user;
+    try {
+      // The BACKEND's copy of the role, not the cached one, so editing
+      // localStorage cannot get anyone in here.
+      user = await Auth.getCurrentUser();
+    } catch (error) {
+      // A 401 is handled by apiFetch. Anything else (offline, 5xx) leaves us
+      // unable to prove admin, so show the sign-in rather than the dashboard.
+      if (error instanceof ApiError && error.isNetwork) {
+        showSignIn('Could not reach the server. Check your connection and try again.');
+      } else {
+        showSignIn();
+      }
+      return null;
+    }
+
+    if (user.role !== 'admin') {
+      // Silent: send them to their normal dashboard, saying nothing about an
+      // admin area existing.
+      window.location.replace('../pages/dashboard.html');
+      return null;
+    }
+    return user;
+  }
+
+  /** Reveal the neutral sign-in card and wire it up. */
+  function showSignIn(message) {
+    const form = $('#admin-signin-form');
+    $('#admin-signin').hidden = false;
+
+    if (message) setFieldError('asi-password', message);
+    if (UIT.initPasswordToggles) UIT.initPasswordToggles();
+
+    const emailField = $('#asi-email');
+    if (emailField) emailField.focus();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearFieldErrors(form);
+
+      const email = $('#asi-email').value.trim().toLowerCase();
+      const password = $('#asi-password').value;
+
+      if (!email) { setFieldError('asi-email', 'Enter your email address.'); return; }
+      if (!password) { setFieldError('asi-password', 'Enter your password.'); return; }
+
+      setButtonLoading($('#asi-submit'), true, 'Signing in…');
+      try {
+        const user = await Auth.login({ email, password });
+
+        if (user.role !== 'admin') {
+          // A genuine student signing in here just gets their own dashboard,
+          // indistinguishable from using the site's normal login.
+          window.location.replace('../pages/dashboard.html');
+          return;
+        }
+
+        $('#admin-signin').hidden = true;
+        startAdmin(user);
+      } catch (error) {
+        setButtonLoading($('#asi-submit'), false);
+        const invalid = error instanceof ApiError && (error.status === 401 || error.status === 422);
+        setFieldError('asi-password',
+          invalid ? 'Incorrect email or password.' : adminMessage(error, 'Could not sign in. Please try again.'));
+      }
+    });
+  }
+
+  /** Build the dashboard. Only ever called with a confirmed admin. */
+  function startAdmin(user) {
     document.title = 'Admin Dashboard — UITogether';
     $('#main').hidden = false;
 
@@ -54,7 +144,7 @@
 
     loadStats();
     loadCompetitions();
-  });
+  }
 
   /* ================================================================== *
    *  Overview
