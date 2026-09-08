@@ -176,6 +176,11 @@
   <script src="../auth/auth.js"></script>
   <script src="../auth/guard.js"></script>
   <script src="../components/navbar.js"></script>
-  <script src="admin.js"></script>
+  <!-- Written as ../pages/ rather than a bare "admin.js" because this page is
+       ALSO served at /admin (a rewrite - see render.yaml). There the browser's
+       base is the site root, so a sibling path would resolve to /admin.js and
+       404, leaving the dashboard rendered but inert. This form resolves to
+       /pages/admin.js from both URLs. -->
+  <script src="../pages/admin.js"></script>
 </body>
 </html>
