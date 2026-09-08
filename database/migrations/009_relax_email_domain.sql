@@ -7,14 +7,15 @@
 --     1. backend/validators/auth.validator.js  (GMAIL_REGEX -> EMAIL_REGEX)
 --     2. this CHECK constraint on users.email
 -- Removing only the validator would still fail at the database with
--- ER_CHECK_CONSTRAINT_VIOLATED.
+-- a check_violation (SQLSTATE 23514).
 --
 -- The address is still format-validated, and the service lowercases
 -- it before insert, so the pattern is lowercase-only by design.
 -- Existing Gmail addresses remain valid under the broader rule.
 -- ============================================================
 
-ALTER TABLE users DROP CHECK chk_users_email_gmail;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS chk_users_email_gmail;
 
+ALTER TABLE users DROP CONSTRAINT IF EXISTS chk_users_email_format;
 ALTER TABLE users ADD CONSTRAINT chk_users_email_format
-  CHECK (email REGEXP '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$');
+  CHECK (email ~ '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$');

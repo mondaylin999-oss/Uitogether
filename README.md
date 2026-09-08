@@ -24,7 +24,7 @@ full API reference and the conventions the project follows.
 2. [Repository layout](#2-repository-layout)
 3. [Install & run — the short version](#3-install--run--the-short-version)
 4. [Step by step, the first time](#4-step-by-step-the-first-time)
-5. [MySQL & MAMP — the full guide](#5-mysql--mamp--the-full-guide)
+5. [PostgreSQL — the full guide](#5-postgresql--the-full-guide)
 6. [Demo logins & your first run](#6-demo-logins--your-first-run)
 7. [Windows setup](#7-windows-setup)
 8. [Opening it from your phone](#8-opening-it-from-your-phone)
@@ -39,15 +39,19 @@ full API reference and the conventions the project follows.
 |---|---|---|---|
 | **Node.js** | 18 or newer | runs the backend API | `node -v` |
 | **npm** | ships with Node | installs the backend's packages | `npm -v` |
-| **MySQL** | 8.0+ (or MariaDB 10.6+) | stores everything | `mysql --version` |
+| **PostgreSQL** | 13 or newer | stores everything | `psql --version` |
 | **Python 3** *or* any static server | — | serves the frontend | `python3 --version` |
 
 The frontend is plain HTML, CSS and JavaScript. **There is no build step, no
 bundler and no framework** — nothing to compile, nothing to install for it.
 
-MySQL is the only piece that needs a decision. This project was developed
-against **MAMP**, whose MySQL listens on port **8889** instead of the usual
-3306. Either works; section 5 covers both.
+PostgreSQL is the only piece that needs a decision — a local install, or a
+free hosted database. Section 5 covers both.
+
+> **Moving from an older checkout?** This project ran on MySQL until the port
+> to PostgreSQL (see [DEPLOY.md](DEPLOY.md#what-the-port-changed)). MAMP and
+> MySQL are no longer used anywhere; your old `uitogether_db` MySQL database
+> can be deleted.
 
 ---
 
@@ -68,10 +72,10 @@ UITogether/
 ```
 
 Three independent parts. The frontend talks to the backend **only** over HTTP
-and never touches MySQL directly:
+and never touches the database directly:
 
 ```
-Frontend (:5500)  ──HTTP──▶  Backend API (:5050)  ──▶  MySQL (:8889 or :3306)
+Frontend (:5500)  ──HTTP──▶  Backend API (:5050)  ──▶  PostgreSQL (:5432)
 ```
 
 Nothing is mixed between the folders: no frontend file lives under `backend/`,
@@ -90,7 +94,7 @@ cd backend
 npm install
 cp .env.example .env
 #   → open .env and set two things:
-#       DB_PASSWORD = your MySQL password   (MAMP's default is "root")
+#       DB_PASSWORD = your PostgreSQL password (often empty locally)
 #       JWT_SECRET  = a long random string  (command below generates one)
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
@@ -131,8 +135,8 @@ cp .env.example .env        # Windows PowerShell:  Copy-Item .env.example .env
 Two values must be filled in. Everything else has a working default.
 
 ```ini
-# your MySQL password — MAMP's default root password is "root"
-DB_PASSWORD=root
+# your PostgreSQL password for DB_USER (often empty on a local install)
+DB_PASSWORD=
 
 # any long random string; this signs the login tokens
 JWT_SECRET=paste-the-64-character-string-here
@@ -148,10 +152,10 @@ It must be at least 32 characters — the server refuses to start otherwise, on
 purpose, so a half-configured install fails loudly instead of quietly running
 with a guessable secret.
 
-**Not using MAMP?** Change the port too:
+**PostgreSQL on a non-default port?** Change it too:
 
 ```ini
-DB_PORT=3306
+DB_PORT=5432
 ```
 
 ### 4.3 Build the database
@@ -176,11 +180,11 @@ Check it worked:
 npm run db:status     # lists applied migrations + row counts
 ```
 
-If your MySQL user is not allowed to create databases, `db:setup` prints the
+If your PostgreSQL role is not allowed to create databases, `db:setup` prints the
 exact one-line `CREATE DATABASE` statement for you to run once — and nothing
 more.
 
-Everything about the database, including doing it by hand in MySQL Workbench:
+Everything about the database, including building it by hand with psql or pgAdmin:
 [`database/README.md`](database/README.md).
 
 ### 4.4 Start the backend
@@ -196,7 +200,7 @@ UITogether API listening on http://localhost:5050 [development]
 Health check:  http://localhost:5050/api/health
 ```
 
-The server checks its configuration and proves MySQL is reachable **before**
+The server checks its configuration and proves PostgreSQL is reachable **before**
 it binds the port, so if something is wrong you get a readable message
 immediately rather than a 500 on your first click.
 
@@ -226,52 +230,83 @@ Open <http://localhost:5500/index.html>.
 
 ---
 
-## 5. MySQL & MAMP — the full guide
+## 5. PostgreSQL — the full guide
 
-### 5.1 With MAMP (what this project was built against)
+### 5.1 Install it
 
-1. Install MAMP and start it. Click **Start Servers**.
-2. MAMP's MySQL listens on **8889**, its user is `root` and its password is
-   `root`.
-3. In `backend/.env`:
+| Platform | How |
+|---|---|
+| **Windows** | [Download the installer](https://www.postgresql.org/download/windows/). Keep the default port 5432 and remember the password you set for the `postgres` user. |
+| **macOS** | [Postgres.app](https://postgresapp.com) is the least fuss, or `brew install postgresql@16 && brew services start postgresql@16`. |
+| **Linux** | `sudo apt install postgresql` (Debian/Ubuntu), then `sudo systemctl start postgresql`. |
 
-   ```ini
-   DB_HOST=127.0.0.1
-   DB_PORT=8889
-   DB_USER=root
-   DB_PASSWORD=root
-   DB_NAME=uitogether_db
-   ```
+Check it is running:
 
-4. `cd backend && npm run db:setup`
+```bash
+psql --version
+```
 
-### 5.2 With a normal MySQL install
-
-Same thing, port 3306:
+### 5.2 Point `.env` at it
 
 ```ini
 DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
+DB_PORT=5432
+DB_USER=postgres
 DB_PASSWORD=your_password
 DB_NAME=uitogether_db
 ```
 
-### 5.3 If MySQL only listens on a socket
+On macOS and Linux the install usually creates a role named after your own
+account with no password, so `DB_USER=$(whoami)` and an empty `DB_PASSWORD`
+often works too.
 
-Some macOS builds have no TCP port at all. Point `.env` at the socket instead;
-`DB_HOST` and `DB_PORT` are then ignored:
+Then:
+
+```bash
+cd backend && npm run db:setup
+```
+
+`db:setup` creates `uitogether_db` for you. If your role is not allowed to
+create databases, make it yourself first and re-run:
+
+```bash
+createdb uitogether_db
+```
+
+### 5.3 Using a hosted database instead
+
+You do not have to install anything locally. Any managed PostgreSQL works —
+including the free Render database this project deploys to. Set one variable
+instead of the five above:
 
 ```ini
-DB_SOCKET=/Applications/MAMP/tmp/mysql/mysql.sock
-# /usr/local/mysql builds:  DB_SOCKET=/tmp/mysql.sock
+DATABASE_URL=postgresql://user:password@host/uitogether_db
+DB_SSL=true
 ```
+
+`DB_SSL=true` is required by essentially every hosted provider. See
+[DEPLOY.md](DEPLOY.md) for the Render setup.
 
 ### 5.4 Seeing the data
 
-phpMyAdmin (bundled with MAMP at <http://localhost:8888/phpMyAdmin>) or MySQL
-Workbench both work. Connect, select `uitogether_db`, and you will find the 9
+`psql` is built in:
+
+```bash
+psql -d uitogether_db -c "\dt"           # list the 9 tables
+psql -d uitogether_db -c "SELECT * FROM users;"
+```
+
+[pgAdmin](https://www.pgadmin.org) and [DBeaver](https://dbeaver.io) are
+graphical alternatives. Connect, open `uitogether_db`, and you will find the 9
 tables listed in [`database/README.md`](database/README.md).
+
+Or skip the SQL entirely:
+
+```bash
+cd backend && npm run db:status
+```
+
+which prints every migration, table row count, view and trigger.
 
 ---
 
@@ -349,7 +384,8 @@ If `python` is not installed, use Node instead:
 npx serve -l 5500 frontend
 ```
 
-On Windows, MySQL is usually on **3306**, so set `DB_PORT=3306` in `.env`.
+On Windows, PostgreSQL uses **5432** by default, which is already the
+default in `.env.example` — usually nothing to change.
 
 ---
 
@@ -416,8 +452,8 @@ And, from `frontend/`:
 | What you see | What it means |
 |---|---|
 | `JWT_SECRET is missing` / `too short` | `backend/.env` has no secret, or fewer than 32 characters. Generate one with the `node -e` command in §4.2 |
-| `Could not connect to MySQL` | MySQL is not running, or the port is wrong. Start MAMP; check `DB_PORT` (8889 for MAMP, 3306 otherwise) |
-| `ER_ACCESS_DENIED_ERROR` | Wrong `DB_USER` / `DB_PASSWORD`. MAMP's default is `root` / `root` |
+| `Could not connect to PostgreSQL` | The server is not running, or the port is wrong. Start PostgreSQL; check `DB_PORT` (5432 by default) |
+| `password authentication failed` | Wrong `DB_USER` / `DB_PASSWORD` in `backend/.env` |
 | `Unknown database 'uitogether_db'` | Run `npm run db:setup` |
 | Page loads but every panel is empty | The backend is not running, or the frontend was opened with `file://`. Serve it over HTTP (§4.5) and check <http://localhost:5050/api/health> |
 | Browser console: *blocked by CORS policy* | The port you served the frontend on is not in `CLIENT_URL` in `backend/.env`. Add it and restart the backend |
@@ -434,7 +470,7 @@ detail, and [README1.md](README1.md) explains how the pieces fit together.
 
 ## Stack
 
-- **Backend** — Node.js, Express, MySQL (`mysql2`), REST
+- **Backend** — Node.js, Express, PostgreSQL (`pg`), REST
 - **Auth** — JWT + bcrypt (cost 12)
 - **Frontend** — plain HTML5, CSS3, vanilla JavaScript; no framework, no build
-- **Database** — MySQL 8: 9 tables, 2 views, 7 triggers, 9 migrations
+- **Database** — PostgreSQL 13+: 9 tables, 2 views, 9 migrations

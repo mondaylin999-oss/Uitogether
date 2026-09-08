@@ -1,6 +1,6 @@
 # UITogether — Backend API
 
-Node.js + Express + MySQL REST API for the UITogether student community app.
+Node.js + Express + PostgreSQL REST API for the UITogether student community app.
 JWT authentication, bcrypt password hashing, fully automated database setup.
 
 > The frontend is **not** part of this folder — it is a separate plain
@@ -9,7 +9,7 @@ JWT authentication, bcrypt password hashing, fully automated database setup.
 > **The SQL is not in this folder either.** Migrations, `schema.sql`,
 > `seed.sql` and `reset.sql` all live in [`../database/`](../database/README.md).
 > Only the Node automation that drives them stays here, in `scripts/db/`,
-> because it needs this folder's config and its installed `mysql2` driver.
+> because it needs this folder's config and its installed `pg` driver.
 
 ---
 
@@ -18,7 +18,7 @@ JWT authentication, bcrypt password hashing, fully automated database setup.
 ```bash
 cd backend
 npm install
-# put your MySQL password in .env (the ONE manual step)
+# put your PostgreSQL password in .env (the ONE manual step)
 npm run db:setup     # creates uitogether_db + all tables/views/triggers
 npm run db:seed      # optional demo data
 npm run dev
@@ -28,16 +28,16 @@ Then open <http://localhost:5050/api/health>.
 
 ### The one manual prerequisite
 
-MySQL will not give a script its own credentials. Open `backend/.env` and set:
+PostgreSQL will not give a script its own credentials. Open `backend/.env` and set:
 
 ```
-DB_PASSWORD=your_mysql_password
+DB_PASSWORD=your_postgres_password
 ```
 
 Everything else (creating the database, all 9 tables, 2 views, 7 triggers) is
 automatic. **You never write SQL or create a table by hand.**
 
-If your MySQL user is not allowed to create databases, `npm run db:setup`
+If your PostgreSQL role is not allowed to create databases, `npm run db:setup`
 prints the exact one-line `CREATE DATABASE` statement to run once — and
 nothing more.
 
@@ -69,7 +69,7 @@ repositories/  ALL SQL. Nothing else in the app writes a query.
 middleware/    auth, admin, validation, rate limit, error handling
 validators/    express-validator chains
 utils/         errors, responses, jwt, bcrypt, contact links, serializers
-config/        env, MySQL pool, shared enums
+config/        env, PostgreSQL pool, shared enums
 scripts/db/    the automation behind the npm run db:* commands
 ```
 
@@ -77,7 +77,7 @@ Request flow:
 
 ```
 route -> rateLimit -> authenticate -> requireAdmin? -> validator -> validate
-      -> controller -> service -> repository -> MySQL
+      -> controller -> service -> repository -> PostgreSQL
                                     |
                        errors ------+--> error.middleware (single formatter)
 ```
@@ -224,7 +224,7 @@ Browse filters: `?semester=&study_style=&wanna_meet=&subject=&q=&sort=&page=&lim
 | DELETE | `/api/notifications/:id` | `*` |
 
 ### Health
-`GET /api/health` — public, reports process + MySQL status.
+`GET /api/health` — public, reports process + PostgreSQL status.
 
 ---
 
@@ -266,7 +266,7 @@ falls back to Telegram Web otherwise — use it as the `href`.
 | Passwords | bcrypt (cost 12), plaintext never stored or logged |
 | Auth | JWT signed with `JWT_SECRET`, user re-loaded from DB per request |
 | Privilege | `authenticate` + `requireAdmin`, plus DB triggers on `created_by` |
-| SQL injection | every value bound via `mysql2` prepared statements; ORDER BY / LIMIT come from allow-lists |
+| SQL injection | every value bound via `pg` parameterised queries; ORDER BY / LIMIT come from allow-lists |
 | Input | express-validator on every write endpoint |
 | Headers | helmet |
 | CORS | explicit origin allow-list from `CLIENT_URL` |

@@ -1,0 +1,110 @@
+# Render Blueprint - UITogether
+#
+# Three resources, all on Render:
+#   uitogether-db     PostgreSQL database
+#   uitogether-api    Node web service  (Express REST API)
+#   uitogether-web    Static site       (plain HTML/CSS/JS frontend)
+#
+# See DEPLOY.md for the click-by-click walkthrough.
+
+databases:
+  - name: uitogether-db
+    databaseName: uitogether_db
+    user: uitogether
+    plan: free
+    region: singapore
+
+services:
+  # ---------------------------------------------------------------- backend
+  - type: web
+    name: uitogether-api
+    runtime: node
+    plan: free
+    # Must match the database's region, or the two cannot use the private
+    # network and connectionString below falls back to the public internet.
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci
+    # Migrations run here rather than as a manual step, because DATABASE_URL is
+    # already injected into this service and the database is only reachable
+    # from inside Render's private network - so no credential ever has to leave
+    # the platform. db:migrate is idempotent (it keeps a schema_migrations
+    # ledger) and each file commits transactionally, so a redeploy that has
+    # nothing to apply is a no-op, and a broken migration stops the service
+    # from starting rather than half-applying.
+    # `preDeployCommand` is the tidier home for this, but it needs a paid plan.
+    startCommand: npm run start:migrate
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      # Render injects PORT; server.js already reads it.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: uitogether-db
+          property: connectionString
+      # The internal connection string stays inside Render's private network,
+      # so TLS is not required (and the internal host has no public cert).
+      - key: DB_SSL
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true  # Render generates a long random secret
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
+      # Must list the static site's URL, or the browser gets a CORS error.
+      # Set literally, NOT via `fromService: property: host`: that substitution
+      # resolves to the bare service name ("uitogether-web") rather than the
+      # full hostname, which yields an origin the browser never sends. Change
+      # this if the static site is renamed or given a custom domain.
+      - key: CLIENT_URL
+        value: https://uitogether-web.onrender.com
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "300"
+      - key: RATE_LIMIT_AUTH_MAX
+        value: "20"
+
+  # --------------------------------------------------------------- frontend
+  - type: web
+    name: uitogether-web
+    runtime: static
+    buildCommand: bash scripts/build-frontend.sh
+    staticPublishPath: ./frontend
+    envVars:
+      # The API origin baked into frontend/config.js at build time.
+      # Keep the /api suffix.
+      - key: API_BASE_URL
+        sync: false          # https://uitogether-api.onrender.com/api
+    routes:
+      # Clean URL for the admin dashboard: /admin serves pages/admin.html
+      # while the address bar keeps saying /admin. It stays a REWRITE so the
+      # browser's base URL is the site root, which is what makes the page's
+      # "../styles/style.css" style links resolve - and what navbar.js and
+      # guard.js assume when they test the path for "/pages/".
+      #
+      # Both spellings are listed, and BOTH are rewrites. Do NOT make either
+      # one a redirect to the other: Render normalises the trailing slash
+      # before matching, so a `/admin/` -> `/admin` redirect also matches
+      # `/admin` and sends it to itself - an infinite 301 loop.
+      #
+      # Note that a Blueprint sync only ADDS routes; it never removes one that
+      # was synced earlier. Deleting a rule means editing it out by hand under
+      # the static site's Redirects/Rewrites tab as well as here.
+      - type: rewrite
+        source: /admin/
+        destination: /pages/admin.html
+      - type: rewrite
+        source: /admin
+        destination: /pages/admin.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff

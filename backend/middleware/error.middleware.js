@@ -4,9 +4,9 @@
  * CENTRALISED ERROR HANDLING - the only place in the app that formats an
  * error response. Controllers and services just `throw`.
  *
- * MySQL driver errors are translated into meaningful HTTP statuses here so
- * that database constraints (unique keys, foreign keys, CHECKs, trigger
- * SIGNALs) surface as clean 4xx messages instead of a generic 500.
+ * PostgreSQL driver errors are translated into meaningful HTTP statuses here
+ * so that database constraints (unique keys, foreign keys, CHECKs, trigger
+ * exceptions) surface as clean 4xx messages instead of a generic 500.
  */
 
 const ApiError = require('../utils/ApiError');
@@ -14,7 +14,10 @@ const { sendError } = require('../utils/apiResponse');
 const { env } = require('../config/env');
 const logger = require('../utils/logger');
 
-/** Friendly text for the constraint names defined in database/migrations. */
+/**
+ * Friendly text for the constraint names defined in database/migrations.
+ * Keys must match the CONSTRAINT names in those files exactly.
+ */
 const CONSTRAINT_MESSAGES = {
   uq_users_email: 'An account with this email already exists',
   uq_users_tnt: 'An account with this TNT number already exists',
@@ -26,63 +29,89 @@ const CONSTRAINT_MESSAGES = {
   chk_profiles_has_contact: 'Provide at least one contact method (Telegram or Viber)',
 };
 
-/** @param {string} message driver message, e.g. "... for key 'uq_users_email'" */
-function messageForConstraint(message, fallback) {
-  const match = /'([^']*?)'/g;
-  let found;
-  while ((found = match.exec(message)) !== null) {
-    const key = found[1].split('.').pop();
-    if (CONSTRAINT_MESSAGES[key]) return CONSTRAINT_MESSAGES[key];
+/**
+ * node-postgres reports the violated constraint by name in `error.constraint`,
+ * so the MySQL port's regex over the driver's message text is no longer
+ * needed. The message text is still searched as a fallback, because a
+ * RAISE EXCEPTION from one of our triggers carries no constraint name.
+ *
+ * @param {any} error
+ * @param {string} fallback
+ */
+function messageForConstraint(error, fallback) {
+  if (error.constraint && CONSTRAINT_MESSAGES[error.constraint]) {
+    return CONSTRAINT_MESSAGES[error.constraint];
   }
+
+  const text = `${error.message || ''} ${error.detail || ''}`;
+  for (const [name, friendly] of Object.entries(CONSTRAINT_MESSAGES)) {
+    if (text.includes(name)) return friendly;
+  }
+
   return fallback;
 }
 
 /**
  * @param {any} error
  * @returns {ApiError|null} translated error, or null if it is not a DB error
+ *
+ * The `code` on a pg error is a five-character SQLSTATE, not a MySQL
+ * ER_* name. Connection failures still arrive as Node's own errno strings.
  */
 function translateDatabaseError(error) {
   switch (error.code) {
-    case 'ER_DUP_ENTRY':
-      return ApiError.conflict(
-        messageForConstraint(error.sqlMessage || '', 'This record already exists')
-      );
+    // 23505 unique_violation
+    case '23505':
+      return ApiError.conflict(messageForConstraint(error, 'This record already exists'));
 
-    case 'ER_NO_REFERENCED_ROW':
-    case 'ER_NO_REFERENCED_ROW_2':
-      return ApiError.badRequest('A referenced record does not exist');
+    // 23503 foreign_key_violation - which side failed depends on the statement
+    case '23503':
+      return /update or delete/i.test(error.message || '')
+        ? ApiError.conflict('This record is still referenced by other data')
+        : ApiError.badRequest('A referenced record does not exist');
 
-    case 'ER_ROW_IS_REFERENCED':
-    case 'ER_ROW_IS_REFERENCED_2':
-      return ApiError.conflict('This record is still referenced by other data');
-
-    case 'ER_CHECK_CONSTRAINT_VIOLATED':
+    // 23514 check_violation
+    case '23514':
       return ApiError.unprocessable(
-        messageForConstraint(error.sqlMessage || '', 'A database constraint rejected this value')
+        messageForConstraint(error, 'A database constraint rejected this value')
       );
 
-    // SIGNAL SQLSTATE '45000' raised by our own triggers - the text is ours,
-    // so it is safe to show it to the client.
-    case 'ER_SIGNAL_EXCEPTION':
-      return ApiError.unprocessable(error.sqlMessage || 'Rejected by a database rule');
+    // 23502 not_null_violation
+    case '23502':
+      return ApiError.badRequest(
+        `Missing required value${error.column ? `: ${error.column}` : ''}`
+      );
 
-    case 'ER_DATA_TOO_LONG':
+    // P0001 raise_exception - our own triggers (previously SIGNAL '45000').
+    // The text is ours, so it is safe to show to the client.
+    case 'P0001':
+      return ApiError.unprocessable(error.message || 'Rejected by a database rule');
+
+    // 22001 string_data_right_truncation
+    case '22001':
       return ApiError.unprocessable('One of the submitted values is too long');
 
-    case 'ER_BAD_DB_ERROR':
+    // 3D000 invalid_catalog_name - the database does not exist
+    case '3D000':
       return ApiError.internal(
-        'Database "uitogether_db" does not exist. Run: npm run db:setup'
+        'The application database does not exist. Run: npm run db:setup'
       );
 
-    case 'ER_NO_SUCH_TABLE':
+    // 42P01 undefined_table
+    case '42P01':
       return ApiError.internal('Database tables are missing. Run: npm run db:setup');
 
-    case 'ER_ACCESS_DENIED_ERROR':
+    // 28P01 invalid_password / 28000 invalid_authorization_specification
+    case '28P01':
+    case '28000':
       return new ApiError(503, 'Database credentials are invalid. Check backend/.env');
 
+    // 57P03 cannot_connect_now - the server is still starting up
+    case '57P03':
     case 'ECONNREFUSED':
-    case 'PROTOCOL_CONNECTION_LOST':
+    case 'ECONNRESET':
     case 'ETIMEDOUT':
+    case 'ENOTFOUND':
       return new ApiError(503, 'Database is unavailable, please try again shortly');
 
     default:

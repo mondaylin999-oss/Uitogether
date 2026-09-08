@@ -87,7 +87,8 @@ async function create(data, userId) {
   const result = await query(
     `INSERT INTO lost_found
        (user_id, type, title, description, location, item_date, image_url, contact_info, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING item_id`,
     [
       userId,
       data.type,

@@ -4,7 +4,8 @@
  * `npm run db:seed`
  *
  * Loads database/seed.sql - clearly-labelled DEMO data only. Every statement
- * uses INSERT IGNORE with explicit ids, so running it twice changes nothing.
+ * uses ON CONFLICT DO NOTHING with explicit ids, so running it twice changes
+ * nothing.
  */
 
 const path = require('path');
@@ -43,7 +44,7 @@ if (require.main === module) {
     .then(() => process.exit(0))
     .catch((error) => {
       logger.error(error.friendlyMessage || error.message);
-      if (error.code === 'ER_NO_SUCH_TABLE') {
+      if (error.code === '42P01') {
         logger.error('Tables are missing. Run `npm run db:setup` first.');
       }
       process.exit(1);

@@ -40,7 +40,7 @@ UITogether/
 Three parts that only ever meet at two seams:
 
 ```
-frontend  ──HTTP/JSON──▶  backend  ──mysql2──▶  MySQL
+frontend  ──HTTP/JSON──▶  backend  ──pg──▶  PostgreSQL
           (services/api.js)        (repositories/ only)
 ```
 
@@ -59,7 +59,7 @@ find it without opening `backend/`. So the `.sql` files live at the root, in
 `database/`, and nothing else in the repository contains SQL.
 
 The Node scripts that *drive* those files (`db:setup`, `db:migrate`, …) are a
-different thing: they import the backend's config and its installed `mysql2`
+different thing: they import the backend's config and its installed `pg`
 driver, so they stay inside the backend, at `backend/scripts/db/`. They read
 their SQL from `../../../database/`.
 
@@ -99,7 +99,7 @@ Supporting cast:
 POST    │                                                      │
 /api/   │   route  ─▶ writeLimiter ─▶ authenticate ─▶ requireAdmin?
 polls   │             ─▶ validator chain ─▶ validate middleware
-        │             ─▶ controller ─▶ service ─▶ repository ─▶ MySQL
+        │             ─▶ controller ─▶ service ─▶ repository ─▶ PostgreSQL
         └──────────────────────────────────────────────────────┘
                                    │
               any thrown error ────┴──▶ error.middleware  (the only formatter)
@@ -119,7 +119,7 @@ if (item.user_id !== userId && role !== 'admin') {
 }
 ```
 
-`server.js` validates the environment and proves MySQL is reachable **before**
+`server.js` validates the environment and proves PostgreSQL is reachable **before**
 binding the port, so a misconfigured install dies immediately with a readable
 message rather than 500ing on the first click.
 
@@ -133,7 +133,7 @@ message rather than 500ing on the first click.
 |---|---|
 | `migrations/001…009_*.sql` | The source of truth. Applied in filename order, checksummed in `schema_migrations` |
 | `schema.sql` | **Generated** by `npm run db:schema`. Never edit by hand |
-| `seed.sql` | Demo data. `INSERT IGNORE` with explicit ids, so it is re-runnable |
+| `seed.sql` | Demo data. `ON CONFLICT DO NOTHING` with explicit ids, so it is re-runnable; ends by fast-forwarding the identity sequences |
 | `reset.sql` | Drops all tables, views and triggers. Destructive |
 | `README.md` | The database guide — setup, migration rules, the data model |
 
@@ -141,17 +141,17 @@ message rather than 500ing on the first click.
 
 | Path | What it is |
 |---|---|
-| `server.js` | Entry point. Validates env → checks MySQL → listens. Graceful shutdown on SIGINT/SIGTERM |
+| `server.js` | Entry point. Validates env → checks PostgreSQL → listens. Graceful shutdown on SIGINT/SIGTERM |
 | `app.js` | The Express app itself: middleware order, CORS allow-list, static uploads, 404, error handler |
 | `config/env.js` | The **only** file that reads `process.env`. Everything else imports from here |
-| `config/database.js` | The `mysql2` pool, plus the connection settings the `scripts/db/*` tools share |
+| `config/database.js` | The `pg` pool, the `?`→`$n` placeholder shim, plus the connection settings the `scripts/db/*` tools share |
 | `config/constants.js` | Shared enums — roles, statuses, sort allow-lists |
 | `routes/index.js` | Mounts every router under `/api`, and owns `GET /api/health` |
 | `routes/*.routes.js` | One per resource. Path + middleware order, nothing else |
 | `controllers/*.js` | Thin. `req` in, service call, `sendSuccess` out |
 | `services/*.js` | All business rules: match logic, ownership, admin checks, notification fan-out |
 | `repositories/*.js` | All SQL. Prepared statements only |
-| `middleware/auth.middleware.js` | Verifies the JWT and **re-loads the user from MySQL** each request |
+| `middleware/auth.middleware.js` | Verifies the JWT and **re-loads the user from the database** each request |
 | `middleware/admin.middleware.js` | `requireAdmin` — 403 for anyone else |
 | `middleware/validate.middleware.js` | Turns express-validator results into a 422 |
 | `middleware/rateLimit.middleware.js` | `apiLimiter` (global), `authLimiter` (strict), `writeLimiter` (moderate) |
@@ -220,7 +220,7 @@ users ──1:1── study_buddy_profiles
 | `buddy_requests` | one row per direction | `uq_requests_pair` stops duplicates; a rejected row is revived rather than re-inserted |
 | `competitions` | events | admin writes only |
 | `lost_found` | lost/found posts | owner or admin may edit |
-| `polls` / `poll_options` / `votes` | voting | `uq_votes_one_per_poll (poll_id, user_id)` — one vote each, enforced by MySQL |
+| `polls` / `poll_options` / `votes` | voting | `uq_votes_one_per_poll (poll_id, user_id)` — one vote each, enforced by the database |
 | `notifications` | inbox | readable only where `user_id` = the caller |
 
 Plus `schema_migrations`, which the migrator creates and maintains for itself.
@@ -239,9 +239,12 @@ database refuses them again in case a row ever arrives another way:
 | `trg_polls_admin_bi` / `_bu` | a poll whose `created_by` is not an admin |
 | `trg_votes_poll_open_bi` | a vote on a closed or expired poll |
 
-> Migration 003 uses triggers rather than CHECK constraints on purpose: MySQL
-> 8.0 forbids `ON DELETE` / `ON UPDATE` referential actions on any column that
-> appears in a CHECK, and `sender_id` / `receiver_id` need both.
+> Migration 003 uses triggers rather than a CHECK constraint for historical
+> reasons: the schema began on MySQL 8.0, which forbids `ON DELETE` /
+> `ON UPDATE` referential actions on any column appearing in a CHECK, and
+> `sender_id` / `receiver_id` need both. PostgreSQL has no such restriction,
+> but the triggers were kept through the port so the rejection message the API
+> surfaces stays identical.
 
 Changing the schema: add a new numbered migration, never edit an applied one.
 The rules are in [`database/README.md`](database/README.md) §3.
@@ -257,7 +260,7 @@ Base URL `http://localhost:5050/api`.
 ### Health
 | Method | Path | |
 |---|---|---|
-| GET | `/health` | public — process + MySQL status |
+| GET | `/health` | public — process + PostgreSQL status |
 
 ### Auth
 | Method | Path | |
@@ -396,7 +399,7 @@ Stack traces are never sent in production.
 - `register` and `login` return `{ user, token }`. Send it back as
   `Authorization: Bearer <token>` — it is also set as an httpOnly cookie, and
   either transport works.
-- `authenticate` verifies the signature **and re-loads the user from MySQL**
+- `authenticate` verifies the signature **and re-loads the user from the database**
   on every request. A role change or a deleted account takes effect
   immediately; a token alone is never trusted for what it claims.
 - `role` is never accepted from a client. Registration always writes
@@ -414,7 +417,7 @@ Stack traces are never sent in production.
 
 1. **UI** — admin buttons are hidden from students. *Convenience only.*
 2. **Page guard** — `auth/guard.js` re-checks the role that `GET /api/auth/me`
-   just returned from MySQL and redirects. Editing `localStorage` does not
+   just returned from the database and redirects. Editing `localStorage` does not
    help: the cached copy is overwritten from the server on every page load.
 3. **Backend** — every admin route mounts `authenticate + requireAdmin` and
    returns 403 regardless of what the frontend did. **This is the real
@@ -568,7 +571,8 @@ its own.
   columns `snake_case`; JavaScript variables `camelCase`; the API speaks
   `snake_case` because it mirrors the columns.
 - **Comments explain *why*.** The codebase is full of notes like "a trigger,
-  not a CHECK, because MySQL 8.0 forbids…" — keep that habit. Do not write
+  not a CHECK, because MySQL 8.0 forbade…" and "`?` is rewritten to `$n` so the
+  repositories did not have to change" — keep that habit. Do not write
   comments that restate the line below them.
 - **No `console.log`.** Use `utils/logger.js`.
 - **No `process.env` outside `config/env.js`.** Add the variable there, with a
@@ -588,9 +592,9 @@ its own.
 | Concern | How it is handled |
 |---|---|
 | Passwords | bcrypt cost 12; plaintext never stored or logged |
-| Auth | JWT signed with `JWT_SECRET`; the user is re-loaded from MySQL per request |
+| Auth | JWT signed with `JWT_SECRET`; the user is re-loaded from the database per request |
 | Privilege | `authenticate` + `requireAdmin`, plus DB triggers on `created_by` |
-| SQL injection | every value bound through `mysql2` prepared statements; `ORDER BY` and `LIMIT` come from allow-lists |
+| SQL injection | every value bound through `pg` parameterised queries; `ORDER BY` and `LIMIT` come from allow-lists |
 | Input | express-validator on every write endpoint; 422 with per-field errors |
 | Private data | contact columns are excluded at the projection level, not filtered afterwards |
 | Headers | helmet |
@@ -599,7 +603,7 @@ its own.
 | Uploads | multer with a type and size cap; `public/uploads/` is gitignored |
 | Errors | one central formatter; stack traces never sent in production |
 | Secrets | `.env` only, gitignored, no hard-coded credentials anywhere |
-| Boot | env validated and MySQL proven reachable before the port is bound |
+| Boot | env validated and PostgreSQL proven reachable before the port is bound |
 
 ---
 

@@ -122,20 +122,21 @@ async function findUserVotesForPolls(pollIds, userId) {
  * @returns {Promise<number>} new poll_id
  */
 function createWithOptions(data, adminUserId) {
-  return withTransaction(async (conn) => {
-    const [pollResult] = await conn.execute(
+  return withTransaction(async (tx) => {
+    const inserted = await tx.query(
       `INSERT INTO polls (question, description, ends_at, created_by, status)
-       VALUES (?, ?, ?, ?, 'open')`,
+       VALUES (?, ?, ?, ?, 'open')
+       RETURNING poll_id`,
       [data.question, data.description ?? null, data.ends_at ?? null, adminUserId]
     );
-    const pollId = pollResult.insertId;
+    const pollId = inserted.insertId;
 
     let order = 1;
     for (const optionText of data.options) {
       // Sequential on purpose: one shared connection, and display_order must
       // follow the order the admin typed.
       // eslint-disable-next-line no-await-in-loop
-      await conn.execute(
+      await tx.query(
         'INSERT INTO poll_options (poll_id, option_text, display_order) VALUES (?, ?, ?)',
         [pollId, optionText, order]
       );
@@ -177,7 +178,8 @@ function findOptionById(optionId) {
  */
 async function castVote(pollId, optionId, userId) {
   const result = await query(
-    'INSERT INTO votes (poll_id, option_id, user_id) VALUES (?, ?, ?)',
+    `INSERT INTO votes (poll_id, option_id, user_id) VALUES (?, ?, ?)
+     RETURNING vote_id`,
     [pollId, optionId, userId]
   );
   return result.insertId;

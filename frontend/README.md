@@ -140,7 +140,7 @@ the last two are security:
 
 1. *UI* — buttons are hidden for students (convenience).
 2. *Page guard* — `auth/guard.js` `requireAdminPage()` re-checks the role that
-   `GET /api/auth/me` just returned from MySQL, then redirects non-admins.
+   `GET /api/auth/me` just returned from the database, then redirects non-admins.
    Editing `localStorage` does not help: the app overwrites the cached copy
    with the server's value on every page load.
 3. *Backend* — every admin route mounts `authenticate + requireAdmin` and

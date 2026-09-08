@@ -36,14 +36,14 @@ function buildSchema() {
 --  Normal setup does NOT need this file - just run:
 --      npm run db:setup
 --
---  To load it manually instead:
---      mysql -u <user> -p < database/schema.sql
+--  To load it manually instead, against an EXISTING database:
+--      psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/schema.sql
+--
+--  PostgreSQL has no "USE" statement and cannot CREATE DATABASE from inside
+--  a script that also builds tables, so the target database is chosen by the
+--  connection you run this with. Create it first if it does not exist:
+--      createdb ${env.db.database}
 -- ============================================================
-
-CREATE DATABASE IF NOT EXISTS \`${env.db.database}\`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE \`${env.db.database}\`;
 `;
 
   const body = files

@@ -23,7 +23,8 @@ async function create(data) {
   const result = await query(
     `INSERT INTO notifications
        (user_id, type, title, message, reference_type, reference_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?)
+     RETURNING notification_id`,
     [
       data.user_id,
       data.type,

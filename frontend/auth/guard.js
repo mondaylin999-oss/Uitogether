@@ -19,7 +19,10 @@
    */
   async function requireAuth() {
     if (!Auth.isAuthenticated()) {
-      window.location.replace('index.html?auth=required');
+      // Root-absolute, like the other two landing-page redirects in
+      // auth.js and services/api.js. A bare 'index.html' resolved against
+      // /pages/admin.html gives /pages/index.html, which does not exist.
+      window.location.replace('/index.html?auth=required');
       return null;
     }
     try {
@@ -44,9 +47,14 @@
     const user = await requireAuth();
     if (!user) return null;
     if (user.role !== 'admin') {
+      // Silent. No `?denied=admin`, no toast: a student who guesses the URL is
+      // simply returned to their dashboard, and is told nothing about an admin
+      // area existing at all. The page's markup is hidden until this resolves
+      // (see admin.html), so they see none of it either.
+      //
       // Use a relative-aware path so the redirect works whether the current
       // document is inside `pages/` or served from the frontend root.
-      const dest = window.location.pathname.includes('/pages/') ? 'dashboard.html?denied=admin' : 'pages/dashboard.html?denied=admin';
+      const dest = window.location.pathname.includes('/pages/') ? 'dashboard.html' : 'pages/dashboard.html';
       window.location.replace(dest);
       return null;
     }

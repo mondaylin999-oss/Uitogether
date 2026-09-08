@@ -151,7 +151,8 @@ async function create(userId, data) {
     `INSERT INTO study_buddy_profiles
        (user_id, nickname, semester, study_style, weak_subjects,
         strong_subjects, wanna_meet, notes, telegram, viber)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING profile_id`,
     [
       userId,
       data.nickname,
