@@ -91,9 +91,10 @@ DATABASE_URL="<external connection string>" DB_SSL=true npm run db:status
 | `/admin` | the admin dashboard (`pages/admin.html`, via a rewrite in `render.yaml`) |
 | `/pages/*.html` | every other page, by its own filename |
 
-`/admin` is a rewrite, so the address bar keeps showing `/admin`. Requests for
-`/admin/` are redirected to `/admin` first: the pages use `../`-relative asset
-links, which only resolve correctly when the browser's base is the site root.
+`/admin` is a rewrite, so the address bar keeps showing `/admin`. Do not add a
+`/admin/` → `/admin` redirect next to it: Render normalises the trailing slash
+before matching routes, so that rule also matches `/admin` and redirects it to
+itself, which is an infinite 301 loop.
 
 ## 4. Verify
 

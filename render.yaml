@@ -84,15 +84,9 @@ services:
       # Clean URL for the admin dashboard: /admin serves pages/admin.html
       # while the address bar keeps saying /admin (rewrite, not redirect).
       #
-      # The trailing-slash form is redirected away first, and deliberately so:
-      # at /admin/ the browser resolves the page's "../styles/style.css" style
-      # links against /admin/, which would 404 every asset. At /admin the base
-      # is the site root, so they resolve exactly as they do from a page opened
-      # at the root - which is also what navbar.js and guard.js assume when
-      # they test the path for "/pages/".
-      - type: redirect
-        source: /admin/
-        destination: /admin
+      # Do NOT add a `/admin/` -> `/admin` redirect alongside this. Render
+      # normalises the trailing slash before matching, so such a rule also
+      # matches `/admin` and redirects it to itself - an infinite 301 loop.
       - type: rewrite
         source: /admin
         destination: /pages/admin.html
