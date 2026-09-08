@@ -19,7 +19,10 @@
    */
   async function requireAuth() {
     if (!Auth.isAuthenticated()) {
-      window.location.replace('index.html?auth=required');
+      // Root-absolute, like the other two landing-page redirects in
+      // auth.js and services/api.js. A bare 'index.html' resolved against
+      // /pages/admin.html gives /pages/index.html, which does not exist.
+      window.location.replace('/index.html?auth=required');
       return null;
     }
     try {
