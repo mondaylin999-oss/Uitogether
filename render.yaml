@@ -1,0 +1,68 @@
+# Render Blueprint - UITogether
+#
+# Two services:
+#   uitogether-api    Node web service  (Express REST API)
+#   uitogether-web    Static site       (plain HTML/CSS/JS frontend)
+#
+# The database is NOT declared here: Render offers PostgreSQL only, and this
+# app runs on MySQL. Provision a free MySQL instance elsewhere (Aiven or
+# Clever Cloud) and paste its URI into DATABASE_URL below. See DEPLOY.md.
+
+services:
+  # ---------------------------------------------------------------- backend
+  - type: web
+    name: uitogether-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      # Render injects PORT; server.js already reads it.
+      - key: DATABASE_URL
+        sync: false          # mysql://user:pass@host:port/dbname?ssl-mode=REQUIRED
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true  # Render generates a long random secret
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
+      # Must list the static site's URL, or the browser gets a CORS error.
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: uitogether-web
+          property: host
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "300"
+      - key: RATE_LIMIT_AUTH_MAX
+        value: "20"
+
+  # --------------------------------------------------------------- frontend
+  - type: web
+    name: uitogether-web
+    runtime: static
+    buildCommand: ./scripts/build-frontend.sh
+    staticPublishPath: ./frontend
+    envVars:
+      # The API origin baked into frontend/config.js at build time.
+      # Keep the /api suffix.
+      - key: API_BASE_URL
+        sync: false          # https://uitogether-api.onrender.com/api
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff

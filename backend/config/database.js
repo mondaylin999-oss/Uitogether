@@ -43,6 +43,14 @@ function baseConnectionConfig({ withDatabase = true } = {}) {
   }
 
   if (withDatabase) config.database = env.db.database;
+
+  // Hosted MySQL (Aiven, Clever Cloud, ...) only accepts TLS connections.
+  if (env.db.ssl) {
+    config.ssl = env.db.sslCa
+      ? { ca: env.db.sslCa, minVersion: 'TLSv1.2' }
+      : { minVersion: 'TLSv1.2' };
+  }
+
   return config;
 }
 

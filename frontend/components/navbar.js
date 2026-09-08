@@ -55,7 +55,7 @@
 
     // compute logo path relative to the current document location
     // pages/ files are nested one level deeper than the frontend root
-    const logoPath = inPages ? '../../Logo/UITogether_Logo.jpg' : '../Logo/UITogether_Logo.jpg';
+    const logoPath = inPages ? '../assets/images/UITogether_Logo.jpg' : 'assets/images/UITogether_Logo.jpg';
     mount.innerHTML = `
       <nav class="navbar" aria-label="Main navigation">
         <div class="container navbar__inner">
