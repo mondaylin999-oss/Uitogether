@@ -43,37 +43,40 @@ three in one step.
 
 4. Click **Apply**.
 
-## 2. Load the schema
+## 2. The schema loads itself
 
-The web service starts before any tables exist, so build the schema once from
-your own machine.
+There is no manual migration step. The API's start command is
+`npm run start:migrate`, which applies any pending migration before the server
+binds its port. `DATABASE_URL` is already injected into the service and the
+database is only reachable from inside Render's private network, so no
+credential ever has to leave the platform.
 
-Copy the database's **External Connection String** from the `uitogether-db`
-page in the Render dashboard (the *internal* one only resolves inside Render's
-network), then:
+This is safe to repeat: `db:migrate` keeps a `schema_migrations` ledger, so a
+redeploy with nothing pending is a no-op, and each migration commits inside its
+own transaction — a broken one stops the service from starting rather than
+leaving the schema half-applied.
+
+### Optional: demo data
+
+The seed is *not* loaded automatically — it is demo content, and blanket-loading
+it into a live database would be wrong. To load it, copy the **External
+Connection String** from the `uitogether-db` page (the *internal* one only
+resolves inside Render) and run:
 
 ```bash
 cd backend && npm install
 ```
 
 ```bash
-DATABASE_URL="<external connection string>" DB_SSL=true npm run db:setup
-```
-
-Optionally load the demo accounts and content:
-
-```bash
 DATABASE_URL="<external connection string>" DB_SSL=true npm run db:seed
 ```
 
-Confirm it worked — this prints every migration, table and row count:
+The same pattern runs any of the `db:*` scripts against the live database —
+`db:status` is a good read-only one to start with:
 
 ```bash
 DATABASE_URL="<external connection string>" DB_SSL=true npm run db:status
 ```
-
-`db:setup` creates the database if needed, then migrates. Use `npm run
-db:migrate` on its own later when you add a migration file.
 
 ## 3. Verify
 

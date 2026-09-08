@@ -25,7 +25,15 @@ services:
     region: singapore
     rootDir: backend
     buildCommand: npm ci
-    startCommand: npm start
+    # Migrations run here rather than as a manual step, because DATABASE_URL is
+    # already injected into this service and the database is only reachable
+    # from inside Render's private network - so no credential ever has to leave
+    # the platform. db:migrate is idempotent (it keeps a schema_migrations
+    # ledger) and each file commits transactionally, so a redeploy that has
+    # nothing to apply is a no-op, and a broken migration stops the service
+    # from starting rather than half-applying.
+    # `preDeployCommand` is the tidier home for this, but it needs a paid plan.
+    startCommand: npm run start:migrate
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
