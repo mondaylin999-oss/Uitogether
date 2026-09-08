@@ -56,12 +56,12 @@ services:
       - key: BCRYPT_SALT_ROUNDS
         value: "12"
       # Must list the static site's URL, or the browser gets a CORS error.
-      # `host` yields a bare hostname; config/env.js normalises it to an origin.
+      # Set literally, NOT via `fromService: property: host`: that substitution
+      # resolves to the bare service name ("uitogether-web") rather than the
+      # full hostname, which yields an origin the browser never sends. Change
+      # this if the static site is renamed or given a custom domain.
       - key: CLIENT_URL
-        fromService:
-          type: web
-          name: uitogether-web
-          property: host
+        value: https://uitogether-web.onrender.com
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: RATE_LIMIT_MAX
