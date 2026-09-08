@@ -83,7 +83,19 @@ The same pattern runs any of the `db:*` scripts against the live database —
 DATABASE_URL="<external connection string>" DB_SSL=true npm run db:status
 ```
 
-## 3. Verify
+## 3. URLs
+
+| Path | Serves |
+| ---- | ------ |
+| `/` | the landing page |
+| `/admin` | the admin dashboard (`pages/admin.html`, via a rewrite in `render.yaml`) |
+| `/pages/*.html` | every other page, by its own filename |
+
+`/admin` is a rewrite, so the address bar keeps showing `/admin`. Requests for
+`/admin/` are redirected to `/admin` first: the pages use `../`-relative asset
+links, which only resolve correctly when the browser's base is the site root.
+
+## 4. Verify
 
 ```bash
 curl https://uitogether-api.onrender.com/api/health

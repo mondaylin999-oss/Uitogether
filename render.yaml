@@ -80,6 +80,22 @@ services:
       # Keep the /api suffix.
       - key: API_BASE_URL
         sync: false          # https://uitogether-api.onrender.com/api
+    routes:
+      # Clean URL for the admin dashboard: /admin serves pages/admin.html
+      # while the address bar keeps saying /admin (rewrite, not redirect).
+      #
+      # The trailing-slash form is redirected away first, and deliberately so:
+      # at /admin/ the browser resolves the page's "../styles/style.css" style
+      # links against /admin/, which would 404 every asset. At /admin the base
+      # is the site root, so they resolve exactly as they do from a page opened
+      # at the root - which is also what navbar.js and guard.js assume when
+      # they test the path for "/pages/".
+      - type: redirect
+        source: /admin/
+        destination: /admin
+      - type: rewrite
+        source: /admin
+        destination: /pages/admin.html
     headers:
       - path: /*
         name: X-Frame-Options
