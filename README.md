@@ -11,11 +11,6 @@
 Student A  →  Interested  →  Student B  →  Accept  →  Mutual match  →  Contact unlocked
 ```
 
-This file is the **setup guide** — everything you need to get the app running
-on your own computer. If you are here to work on the code, read
-[README1.md](README1.md) instead: architecture, folder-by-folder layout, the
-full API reference and the conventions the project follows.
-
 ---
 
 ## Table of contents
