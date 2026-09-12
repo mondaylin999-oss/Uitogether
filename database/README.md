@@ -111,7 +111,9 @@ cd backend && npm run db:schema && npm run db:migrate && npm run db:status
 
 ## 4. What is in the database
 
-**9 tables, 2 views, 7 triggers**, plus the `schema_migrations` ledger the
+**9 tables, 2 views, 16 triggers** (7 enforce rules; the other 9 maintain
+`updated_at`, which PostgreSQL cannot do with a column clause), plus the
+`schema_migrations` ledger the
 migrator maintains for itself.
 
 | Migration | Creates | Notes |

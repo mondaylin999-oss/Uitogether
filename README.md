@@ -13,8 +13,46 @@ Student A  →  Interested  →  Student B  →  Accept  →  Mutual match  → 
 
 ---
 
+## Live app
+
+UITogether is deployed on **[Render](https://render.com)** — frontend, backend
+and database all on the one platform, with no second vendor:
+
+| | URL |
+|---|---|
+| **Web app** | <https://uitogether-web.onrender.com> |
+| **Admin dashboard** | <https://uitogether-web.onrender.com/admin> |
+| **API health check** | <https://uitogether-api.onrender.com/api/health> |
+
+Three Render resources, created from [`render.yaml`](render.yaml) in one step
+rather than clicked together by hand:
+
+| Resource | Type | Runs |
+|---|---|---|
+| `uitogether-web` | Static Site | `frontend/` |
+| `uitogether-api` | Web Service (Node) | `backend/` |
+| `uitogether-db` | PostgreSQL 18 | the schema in `database/` |
+
+Everything sits on Render's **free** tier. Three consequences are worth knowing
+before you judge the app by it:
+
+- **The API sleeps after 15 minutes idle.** The first request afterwards takes
+  30–50 seconds while the instance wakes. This is normal, not a bug — if a
+  login seems to hang, wait rather than retrying.
+- **A free PostgreSQL instance expires 30 days after it is created**, and is
+  then deleted with no automatic backup.
+- **Uploaded images do not survive a deploy.** The free filesystem is
+  ephemeral, so pictures attached to competitions or lost-and-found posts
+  disappear on the next deploy.
+
+The full walkthrough — including how the schema builds itself on deploy — is in
+[DEPLOY.md](DEPLOY.md).
+
+---
+
 ## Table of contents
 
+0. [Live app](#live-app) — where it is deployed, and the URLs
 1. [What you need installed](#1-what-you-need-installed)
 2. [Repository layout](#2-repository-layout)
 3. [Install & run — the short version](#3-install--run--the-short-version)
@@ -25,6 +63,7 @@ Student A  →  Interested  →  Student B  →  Accept  →  Mutual match  → 
 8. [Opening it from your phone](#8-opening-it-from-your-phone)
 9. [Every command in one table](#9-every-command-in-one-table)
 10. [Troubleshooting](#10-troubleshooting)
+11. [Deploying it yourself](#11-deploying-it-yourself)
 
 ---
 
@@ -55,7 +94,11 @@ free hosted database. Section 5 covers both.
 ```
 UITogether/
 ├── README.md      ← you are here — setup and running
-├── README1.md       developer guide — architecture, API, conventions
+├── README1.md       developer guide (local only — not tracked in git)
+├── DEPLOY.md        how this is deployed to Render
+├── render.yaml      the three Render resources, as code
+├── scripts/
+│   └── build-frontend.sh   bakes the API URL into frontend/config.js at deploy
 ├── database/        ALL the SQL lives here
 │   ├── migrations/    9 numbered files — the source of truth
 │   ├── schema.sql     the migrations concatenated (generated)
@@ -63,15 +106,24 @@ UITogether/
 │   ├── reset.sql      drops everything (destructive)
 │   └── README.md      the database guide
 ├── backend/         Node.js + Express REST API
-└── frontend/        plain HTML/CSS/JS app (no build step)
+├── frontend/        plain HTML/CSS/JS app (no build step)
+│   └── config.js      the API URL — a placeholder locally, filled in on deploy
+└── Logo/            the project logo (the app's own copy is in frontend/assets)
 ```
 
 Three independent parts. The frontend talks to the backend **only** over HTTP
 and never touches the database directly:
 
 ```
-Frontend (:5500)  ──HTTP──▶  Backend API (:5050)  ──▶  PostgreSQL (:5432)
+locally      Frontend (:5500)  ──HTTP──▶  Backend API (:5050)  ──▶  PostgreSQL (:5432)
+
+on Render    uitogether-web    ──HTTPS─▶  uitogether-api       ──▶  uitogether-db
+             (Static Site)                (Web Service)             (PostgreSQL)
 ```
+
+The same three parts either way. Only two things differ in production: the
+frontend is told the API's public URL at build time (see `frontend/config.js`),
+and the API reaches the database over Render's private network.
 
 Nothing is mixed between the folders: no frontend file lives under `backend/`,
 no backend file lives under `frontend/`, and no `.sql` file lives outside
@@ -94,7 +146,7 @@ cp .env.example .env
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 # ── 2) DATABASE — create every table ────────────────────────────────
-npm run db:setup     # creates uitogether_db + 9 tables, 2 views, 7 triggers
+npm run db:setup     # creates uitogether_db + 9 tables, 2 views, 16 triggers
 npm run db:seed      # optional: demo students, polls, competitions
 
 # ── 3) RUN — two terminals, both stay open ──────────────────────────
@@ -160,7 +212,7 @@ npm run db:setup
 ```
 
 That single command creates `uitogether_db` and applies all 9 migrations —
-9 tables, 2 views and 7 triggers. **You never write SQL or create a table by
+9 tables, 2 views and 16 triggers. **You never write SQL or create a table by
 hand.**
 
 Add demo data so there is something to look at:
@@ -307,7 +359,9 @@ which prints every migration, table row count, view and trigger.
 
 ## 6. Demo logins & your first run
 
-After `npm run db:seed`:
+These are created by `npm run db:seed`, and the same accounts are already
+loaded on the [live app](#live-app) — so you can try it without installing
+anything:
 
 | Email | Password | Role |
 |---|---|---|
@@ -318,6 +372,20 @@ After `npm run db:seed`:
 | `thiri.aung.dev@gmail.com` | `Student@123` | student |
 | `min.khant.dev@gmail.com` | `Student@123` | student |
 | `ei.phyu.dev@gmail.com` | `Student@123` | student |
+
+> **These passwords are public.** They are written in `database/seed.sql` in
+> this repository, so treat every account above as demo-only. Change the admin
+> password before putting anything real behind it.
+
+**The admin account is the only way into the admin dashboard.** Registration
+always creates a `student` — deliberately, so nobody can sign themselves up as
+an administrator. Open `/admin` and sign in there directly:
+
+- locally: <http://localhost:5500/pages/admin.html>
+- live: <https://uitogether-web.onrender.com/admin>
+
+Signing in as a student instead simply lands you on the ordinary dashboard.
+Nothing in the student interface mentions that an admin area exists.
 
 ### The whole app in three minutes
 
@@ -459,7 +527,39 @@ And, from `frontend/`:
 | `npm run db:migrate` says a migration changed | An already-applied file was edited. Restore it and add a new numbered migration instead — see [`database/README.md`](database/README.md) §3 |
 
 Still stuck? [`database/README.md`](database/README.md) covers the database in
-detail, and [README1.md](README1.md) explains how the pieces fit together.
+detail, and [DEPLOY.md](DEPLOY.md) covers the hosted setup.
+
+---
+
+## 11. Deploying it yourself
+
+The project is hosted on **[Render](https://render.com)**, and the whole
+deployment is described by [`render.yaml`](render.yaml) at the repository root.
+Render reads that file and creates all three resources — static site, web
+service and PostgreSQL database — in one step.
+
+The short version:
+
+1. Push this repository to GitHub.
+2. On <https://dashboard.render.com>: **New → Blueprint**, pick the repository.
+3. Render finds `render.yaml` and asks for one value, `API_BASE_URL`
+   (the API's URL **including `/api`**). Everything else — `DATABASE_URL`,
+   `JWT_SECRET`, `CLIENT_URL` — is wired automatically.
+4. **Apply.**
+
+There is no manual database step: the API starts with `npm run start:migrate`,
+which applies any pending migration before it binds its port, using the
+`DATABASE_URL` Render already injected. Demo data stays manual, because
+loading it into a live database automatically would be wrong.
+
+[DEPLOY.md](DEPLOY.md) has the full walkthrough, the complete environment
+variable reference, and the Render-specific traps worth knowing about.
+
+**Why Render, and not Vercel?** An older `backend/vercel.json` is still in the
+tree from an earlier attempt. Render was chosen because this backend is a
+long-running Express server with a connection pool and a real relational
+database — a better fit for a web service than for serverless functions, and
+Render hosts the database alongside it rather than requiring a second provider.
 
 ---
 
@@ -468,4 +568,7 @@ detail, and [README1.md](README1.md) explains how the pieces fit together.
 - **Backend** — Node.js, Express, PostgreSQL (`pg`), REST
 - **Auth** — JWT + bcrypt (cost 12)
 - **Frontend** — plain HTML5, CSS3, vanilla JavaScript; no framework, no build
-- **Database** — PostgreSQL 13+: 9 tables, 2 views, 9 migrations
+- **Database** — PostgreSQL 13+ (18 in production): 9 tables, 2 views,
+  9 migrations
+- **Hosting** — Render: Static Site + Node Web Service + managed PostgreSQL,
+  all declared in `render.yaml`
